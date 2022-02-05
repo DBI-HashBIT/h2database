@@ -407,8 +407,11 @@ public class LocalResult implements ResultInterface, ResultTarget {
     public void addRow(Value... values) {
         System.out.println("addRow\n" + values);
         assert values.length == resultColumnCount;
+        System.out.println("Local Result cloneLobs");
         cloneLobs(values);
+        System.out.println("Local Result addRowInternal");
         addRowInternal(values);
+        System.out.println("Local Result After addRowInternal");
     }
 
     private void addRowInternal(Value... values) {

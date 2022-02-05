@@ -103,6 +103,7 @@ public class ConditionAndOr extends Condition {
 
     @Override
     public Value getValue(SessionLocal session) {
+        System.out.println("Condition&andOr getValue Method");
         Value l = left.getValue(session);
         Value r;
         switch (andOrType) {

@@ -729,27 +729,33 @@ public class Select extends Query {
                 limitRows = Long.MAX_VALUE;
             }
         }
+
         LazyResultQueryFlat lazyResult = new LazyResultQueryFlat(expressionArray, columnCount, isForUpdate);
         skipOffset(lazyResult, offset, quickOffset);
         if (result == null) {
             return lazyResult;
         }
+        System.out.println("Check Point AAAA1");
         if (limitRows < 0 || sort != null && !sortUsingIndex || withTies && !quickOffset) {
+            System.out.println("Check Point AAAA2");
             limitRows = Long.MAX_VALUE;
         }
         Value[] row = null;
         while (result.getRowCount() < limitRows && lazyResult.next()) {
+            System.out.println("Check Point AAAA3");
             row = lazyResult.currentRow();
             //Add elements
             result.addRow(row);
         }
         if (limitRows != Long.MAX_VALUE && withTies && sort != null && row != null) {
+            System.out.println("Check Point AAAA4");
             Value[] expected = row;
             while (lazyResult.next()) {
                 row = lazyResult.currentRow();
                 if (sort.compare(expected, row) != 0) {
                     break;
                 }
+                System.out.println("Check Point AAAA5");
                 result.addRow(row);
             }
             result.limitsWereApplied();
@@ -1852,6 +1858,11 @@ public class Select extends Query {
             this.forUpdate = forUpdate;
         }
 
+        // for (Expression exp: expressions){
+        //     if (exp instanceof org.h2.expression.condition.ConditionAndOr) {
+        //         System.out.println("CUSTOM METHOD WORKED FOR FIND 'AND' / 'OR FUNCTION");
+        //     }
+        // }
         @Override
         protected Value[] fetchNextRow() {
             System.out.println("LazyResultQueryFlat :- " + "fetchNextRow");
@@ -1863,7 +1874,12 @@ public class Select extends Query {
                     Value[] row = new Value[columnCount];
                     for (int i = 0; i < columnCount; i++) {
                         Expression expr = expressions.get(i);
+                        if (expr instanceof org.h2.expression.condition.ConditionAndOr) {
+                            System.out.println("AND FOUND IN SELECT CLASSS");
+                        }
+                        // System.out.println("Check before AND/OR/Count");
                         row[i] = expr.getValue(getSession());
+                        // System.out.println("Check After AND/OR/Count");
                     }
                     return row;
                 }
