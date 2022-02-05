@@ -197,6 +197,8 @@ public final class MVSecondaryIndex extends MVIndex<SearchRow, Value> {
 
     private void checkUnique(boolean repeatableRead, TransactionMap<SearchRow,Value> map, SearchRow row,
             long newKey) {
+        System.out.println("checkUnique");
+
         RowFactory uniqueRowFactory = getUniqueRowFactory();
         SearchRow from = uniqueRowFactory.createRow();
         from.copyFrom(row);
@@ -267,10 +269,12 @@ public final class MVSecondaryIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public Cursor find(SessionLocal session, SearchRow first, SearchRow last) {
+        System.out.println("These methods will run iff there is an index; this is find method");
         return find(session, first, false, last);
     }
 
     private Cursor find(SessionLocal session, SearchRow first, boolean bigger, SearchRow last) {
+        System.out.println("These methods will run iff there is an index; this is nested find method, when there is a where start and last are there");
         SearchRow min = convertToKey(first, bigger);
         SearchRow max = convertToKey(last, Boolean.TRUE);
         return new MVStoreCursor(session, getMap(session).keyIterator(min, max), mvTable);
@@ -415,6 +419,7 @@ public final class MVSecondaryIndex extends MVIndex<SearchRow, Value> {
 
         @Override
         public Row get() {
+            System.out.println("This method get run now");
             if (row == null) {
                 SearchRow r = getSearchRow();
                 if (r != null) {
@@ -426,11 +431,13 @@ public final class MVSecondaryIndex extends MVIndex<SearchRow, Value> {
 
         @Override
         public SearchRow getSearchRow() {
+            System.out.println("This method getSearchRow run now");
             return current;
         }
 
         @Override
         public boolean next() {
+            System.out.println("This method next run now");
             current = it.fetchNext();
             row = null;
             return current != null;
@@ -438,6 +445,7 @@ public final class MVSecondaryIndex extends MVIndex<SearchRow, Value> {
 
         @Override
         public boolean previous() {
+            System.out.println("This method previous run now");
             throw DbException.getUnsupportedException("previous");
         }
     }

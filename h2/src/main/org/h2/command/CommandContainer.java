@@ -44,7 +44,7 @@ public class CommandContainer extends Command {
     /**
      * Collector of generated keys.
      */
-    private static final class GeneratedKeysCollector implements ResultTarget {
+    public static final class GeneratedKeysCollector implements ResultTarget {
 
         private final int[] indexes;
         private final LocalResult result;

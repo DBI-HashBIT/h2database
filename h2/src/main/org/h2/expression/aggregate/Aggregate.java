@@ -258,6 +258,7 @@ public class Aggregate extends AbstractAggregate implements ExpressionWithFlags 
     }
 
     private void updateData(SessionLocal session, AggregateData data, Value v, Value[] remembered) {
+        System.out.println("This is Aggregriate udateData Method");
         switch (aggregateType) {
         case COVAR_POP:
         case COVAR_SAMP:
@@ -334,6 +335,7 @@ public class Aggregate extends AbstractAggregate implements ExpressionWithFlags 
         }
         default:
             // Use argument as is
+            System.out.println("This is Aggregriate udateData methos goes to default");
         }
         data.add(session, v);
     }

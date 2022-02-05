@@ -158,6 +158,8 @@ public class IndexCursor implements Cursor {
             if (intersects != null && index instanceof SpatialIndex) {
                 cursor = ((SpatialIndex) index).findByGeometry(session, start, end, intersects);
             } else if (index != null) {
+                System.out.println("This is the method to use to find by indexAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+                System.out.println("The Cursor will set to MVStore Cursor");
                 cursor = index.find(session, start, end);
             }
         }
@@ -314,6 +316,7 @@ public class IndexCursor implements Cursor {
     private void find(Value v) {
         v = inColumn.convert(session, v);
         int id = inColumn.getColumnId();
+        System.out.println("Using the set value method");
         start.setValue(id, v);
         cursor = index.find(session, start, start);
     }

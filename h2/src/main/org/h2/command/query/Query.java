@@ -189,6 +189,7 @@ public abstract class Query extends Prepared {
     protected abstract ResultInterface queryWithoutCache(long limit, ResultTarget target);
 
     private ResultInterface queryWithoutCacheLazyCheck(long limit, ResultTarget target) {
+        System.out.println("queryWithoutCacheLazyCheck : ");
         boolean disableLazy = neverLazy && session.isLazyQueryExecution();
         if (disableLazy) {
             session.setLazyQueryExecution(false);
@@ -468,6 +469,7 @@ public abstract class Query extends Prepared {
 
     @Override
     public final ResultInterface query(long maxrows) {
+        System.out.println("This is query method up");
         return query(maxrows, null);
     }
 
@@ -479,6 +481,7 @@ public abstract class Query extends Prepared {
      * @return the result set (if the target is not set).
      */
     public final ResultInterface query(long limit, ResultTarget target) {
+        System.out.println("This is query method down");
         if (isUnion()) {
             // union doesn't always know the parameter list of the left and
             // right queries

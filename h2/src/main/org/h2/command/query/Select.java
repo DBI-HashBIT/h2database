@@ -206,6 +206,7 @@ public class Select extends Query {
      * Sets a wildcard expression as in "SELECT * FROM TEST".
      */
     public void setWildcard() {
+        System.out.println("\nselect * from Table\n");
         expressions = new ArrayList<>(1);
         expressions.add(new Wildcard(null, null));
     }
@@ -518,8 +519,11 @@ public class Select extends Query {
             setCurrentRowNumber(rowNumber + 1);
             if (isForUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                 rowNumber++;
+                System.out.println(" Before Select GatherGroup nextSource");
                 groupData.nextSource();
+                System.out.println("Select GatherGroup nextSource");
                 updateAgg(columnCount, stage);
+                System.out.println("Select GatherGroup updateAgg");
             }
         }
         groupData.done();
@@ -709,6 +713,7 @@ public class Select extends Query {
 
     private LazyResult queryFlat(int columnCount, ResultTarget result, long offset, long limitRows, boolean withTies,
             boolean quickOffset) {
+        System.out.println("This is Query Flat Method");
         if (limitRows > 0 && offset > 0 && !quickOffset) {
             limitRows += offset;
             if (limitRows < 0) {
@@ -727,6 +732,7 @@ public class Select extends Query {
         Value[] row = null;
         while (result.getRowCount() < limitRows && lazyResult.next()) {
             row = lazyResult.currentRow();
+            //Add elements
             result.addRow(row);
         }
         if (limitRows != Long.MAX_VALUE && withTies && sort != null && row != null) {
@@ -752,6 +758,7 @@ public class Select extends Query {
     }
 
     private void queryQuick(int columnCount, ResultTarget result, boolean skipResult) {
+        System.out.println("\nThis is Select , QueryQuick\n");
         Value[] row = new Value[columnCount];
         for (int i = 0; i < columnCount; i++) {
             Expression expr = expressions.get(i);
@@ -764,6 +771,12 @@ public class Select extends Query {
 
     @Override
     protected ResultInterface queryWithoutCache(long maxRows, ResultTarget target) {
+        if (target instanceof org.h2.command.CommandContainer.GeneratedKeysCollector) {
+            System.out.println("target is instanceof GeneratedKeysCollector");
+        }
+        System.out.println("This is the queryWithoutCache Method");
+        System.out.print("maxRows " + maxRows);
+        System.out.print("target" + target);
         disableLazyForJoinSubqueries(topTableFilter);
         OffsetFetch offsetFetch = getOffsetFetch(maxRows);
         long offset = offsetFetch.offset;
@@ -776,11 +789,13 @@ public class Select extends Query {
         LocalResult result = null;
         if (!lazy && (target == null ||
                 !session.getDatabase().getSettings().optimizeInsertFromSelect)) {
+                    System.out.println("Resultset is created in here1");
             result = createLocalResult(result);
         }
         // Do not add rows before OFFSET to result if possible
         boolean quickOffset = !fetchPercent;
         if (sort != null && (!sortUsingIndex || isAnyDistinct())) {
+            System.out.println("Resultset is created in here1");
             result = createLocalResult(result);
             result.setSortOrder(sort);
             if (!sortUsingIndex) {
@@ -789,20 +804,29 @@ public class Select extends Query {
         }
         if (distinct) {
             if (!isDistinctQuery) {
+                System.out.println("Resultset is created in here2");
                 quickOffset = false;
                 result = createLocalResult(result);
                 result.setDistinct();
             }
         } else if (distinctExpressions != null) {
+            System.out.println("Resultset is created in here3");
             quickOffset = false;
             result = createLocalResult(result);
             result.setDistinct(distinctIndexes);
         }
         if (isWindowQuery || isGroupQuery && !isGroupSortedQuery) {
+            System.out.println("Resultset is created in here4");
             result = createLocalResult(result);
         }
         if (!lazy && (fetch >= 0 || offset > 0)) {
+            System.out.println("Resultset is created in here5");
             result = createLocalResult(result);
+        }
+        if (result == null) {
+            System.out.println("Result set is null");
+        } else {
+            System.out.println("Result set is not null");
         }
         topTableFilter.startQuery(session);
         topTableFilter.reset();
@@ -814,22 +838,29 @@ public class Select extends Query {
             // Cannot apply limit now if percent is specified
             long limit = fetchPercent ? -1 : fetch;
             if (isQuickAggregateQuery) {
+                System.out.println("queryQuick Method executed in here");
                 queryQuick(columnCount, to, quickOffset && offset > 0);
             } else if (isWindowQuery) {
                 if (isGroupQuery) {
+                    System.out.println("queryGroupWindow Method executed in here");
                     queryGroupWindow(columnCount, result, offset, quickOffset);
                 } else {
+                    System.out.println("queryWindow Method executed in here");
                     queryWindow(columnCount, result, offset, quickOffset);
                 }
             } else if (isGroupQuery) {
                 if (isGroupSortedQuery) {
+                    System.out.println("queryGroupSorted Method executed in here");
                     lazyResult = queryGroupSorted(columnCount, to, offset, quickOffset);
                 } else {
+                    System.out.println("queryGroup Method executed in here");
                     queryGroup(columnCount, result, offset, quickOffset);
                 }
             } else if (isDistinctQuery) {
+                System.out.println("queryDistinct Method executed in here");
                 queryDistinct(to, offset, limit, withTies, quickOffset);
             } else {
+                System.out.println("queryFlat Method executed in here");
                 lazyResult = queryFlat(columnCount, to, offset, limit, withTies, quickOffset);
             }
             if (quickOffset) {
@@ -867,6 +898,7 @@ public class Select extends Query {
     }
 
     private LocalResult createLocalResult(LocalResult old) {
+        System.out.println("createLocalResult");
         return old != null ? old : new LocalResult(session, expressionArray, visibleColumnCount, resultColumnCount);
     }
 
@@ -1814,6 +1846,7 @@ public class Select extends Query {
 
         @Override
         protected Value[] fetchNextRow() {
+            System.out.println("LazyResultQueryFlat :- " + "fetchNextRow");
             while (topTableFilter.next()) {
                 setCurrentRowNumber(rowNumber + 1);
                 // This method may lock rows
@@ -1872,6 +1905,7 @@ public class Select extends Query {
 
         @Override
         protected Value[] fetchNextRow() {
+            System.out.println("LazyResultGroupSorted :- " + "fetchNextRow");
             while (topTableFilter.next()) {
                 setCurrentRowNumber(rowNumber + 1);
                 if (isConditionMet()) {

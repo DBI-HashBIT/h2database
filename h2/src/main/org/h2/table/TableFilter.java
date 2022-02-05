@@ -388,6 +388,7 @@ public class TableFilter implements ColumnResolver {
      * @return true if there are
      */
     public boolean next() {
+        System.out.println("This is table filter next method");
         if (state == AFTER_LAST) {
             return false;
         } else if (state == BEFORE_FIRST) {

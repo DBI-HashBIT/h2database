@@ -404,6 +404,7 @@ public class MVTable extends TableBase {
     }
 
     private void rebuildIndexBlockMerge(SessionLocal session, MVIndex<?,?> index) {
+        System.out.println("This is mvtable rebuildIndexBlockMerge method");
         // Read entries in memory, sort them, write to a new map (in sorted
         // order); repeat (using a new map for every block of 1 MB) until all
         // record are read. Merge all maps to the target (using merge sort;

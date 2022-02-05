@@ -80,6 +80,7 @@ public abstract class SelectGroups {
         @Override
         public void nextSource() {
             if (groupIndex == null) {
+                System.out.println("This is select Group class; Group Index is null in here");
                 currentGroupsKey = ValueRow.EMPTY;
             } else {
                 Value[] keyValues = new Value[groupIndex.length];

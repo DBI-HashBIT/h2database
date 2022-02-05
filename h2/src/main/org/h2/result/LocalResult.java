@@ -405,6 +405,7 @@ public class LocalResult implements ResultInterface, ResultTarget {
      */
     @Override
     public void addRow(Value... values) {
+        System.out.println("addRow\n" + values);
         assert values.length == resultColumnCount;
         cloneLobs(values);
         addRowInternal(values);
@@ -567,6 +568,7 @@ public class LocalResult implements ResultInterface, ResultTarget {
 
     @Override
     public long getRowCount() {
+        System.out.println("Here about to return the row count");
         return rowCount;
     }
 

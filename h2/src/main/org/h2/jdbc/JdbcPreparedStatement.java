@@ -112,6 +112,7 @@ public class JdbcPreparedStatement extends JdbcStatement implements PreparedStat
      */
     @Override
     public ResultSet executeQuery() throws SQLException {
+        System.out.println("This is Execute Query Method in JDBC");
         try {
             int id = getNextId(TraceObject.RESULT_SET);
             debugCodeAssign("ResultSet", TraceObject.RESULT_SET, id, "executeQuery()");

@@ -3451,6 +3451,7 @@ public class Parser {
         switch (aggregateType) {
         case COUNT:
             if (readIf(ASTERISK)) {
+                System.out.println("Here Reads the Aggrigriate Type");
                 r = new Aggregate(AggregateType.COUNT_ALL, new Expression[0], currentSelect, false);
             } else {
                 boolean distinct = readDistinctAgg();

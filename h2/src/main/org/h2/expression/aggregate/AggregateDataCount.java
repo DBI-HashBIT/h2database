@@ -20,11 +20,13 @@ final class AggregateDataCount extends AggregateData {
     private long count;
 
     AggregateDataCount(boolean all) {
+        System.out.println("AggregateDataCount AggregateDataCount Method");
         this.all = all;
     }
 
     @Override
     void add(SessionLocal session, Value v) {
+        System.out.println("AggregateDataCount add Method");
         if (all || v != ValueNull.INSTANCE) {
             count++;
         }
@@ -32,6 +34,7 @@ final class AggregateDataCount extends AggregateData {
 
     @Override
     Value getValue(SessionLocal session) {
+        System.out.println("AggregateDataCount getValue Method");
         return ValueBigint.get(count);
     }
 
