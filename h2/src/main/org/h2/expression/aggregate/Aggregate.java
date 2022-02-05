@@ -77,7 +77,7 @@ public class Aggregate extends AbstractAggregate implements ExpressionWithFlags 
 
     private static final HashMap<String, AggregateType> AGGREGATES = new HashMap<>(128);
 
-    private final AggregateType aggregateType;
+    public final AggregateType aggregateType;
 
     private ArrayList<QueryOrderBy> orderByList;
     private SortOrder orderBySort;

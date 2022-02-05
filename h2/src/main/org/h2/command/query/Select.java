@@ -515,6 +515,13 @@ public class Select extends Query {
     private void gatherGroup(int columnCount, int stage) {
         long rowNumber = 0;
         setCurrentRowNumber(0);
+        for (Expression exp: expressions) {
+            if (exp instanceof org.h2.expression.aggregate.Aggregate) {    
+                if (((org.h2.expression.aggregate.Aggregate) exp).aggregateType.name().equals("COUNT")) {
+                    System.out.println("CUSTOM METHOD WORKED FOR FIND COUNT AGGREGIATE FUNCTION");
+                }
+            }
+        }
         while (topTableFilter.next()) {
             setCurrentRowNumber(rowNumber + 1);
             if (isForUpdate ? isConditionMetForUpdate() : isConditionMet()) {
@@ -537,6 +544,7 @@ public class Select extends Query {
      */
     void updateAgg(int columnCount, int stage) {
         for (int i = 0; i < columnCount; i++) {
+            System.out.println("updateAgg method in Select class, columnCount:-  " + columnCount + " stage :- " + stage);
             if ((groupByExpression == null || !groupByExpression[i])
                     && (groupByCopies == null || groupByCopies[i] < 0)) {
                 Expression expr = expressions.get(i);
