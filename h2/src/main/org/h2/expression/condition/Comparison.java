@@ -214,6 +214,7 @@ public final class Comparison extends Condition {
 
     @Override
     public Value getValue(SessionLocal session) {
+        System.out.println("This is the methos that use to compare the comparisons and get the results!!!!!");
         Value l = left.getValue(session);
         // Optimization: do not evaluate right if not necessary
         if (l == ValueNull.INSTANCE && (compareType & ~1) != EQUAL_NULL_SAFE) {
@@ -249,10 +250,12 @@ public final class Comparison extends Condition {
         case EQUAL: {
             int cmp = session.compareWithNull(l, r, true);
             if (cmp == 0) {
+                System.out.println("Result is TRUE");
                 result = ValueBoolean.TRUE;
             } else if (cmp == Integer.MIN_VALUE) {
                 result = ValueNull.INSTANCE;
             } else {
+                System.out.println("Result is FALSE");
                 result = ValueBoolean.FALSE;
             }
             break;

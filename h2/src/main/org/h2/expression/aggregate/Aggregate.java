@@ -253,7 +253,9 @@ public class Aggregate extends AbstractAggregate implements ExpressionWithFlags 
     @Override
     protected void updateAggregate(SessionLocal session, Object aggregateData) {
         AggregateData data = (AggregateData) aggregateData;
+        System.out.println("Before caling updateData ,- Get value()");
         Value v = args.length == 0 ? null : args[0].getValue(session);
+        System.out.println("After caling updateData ,- Get value()");
         updateData(session, data, v, null);
     }
 
@@ -334,7 +336,9 @@ public class Aggregate extends AbstractAggregate implements ExpressionWithFlags 
         }
         default:
             // Use argument as is
+            System.out.println("Dfault method executed in aggregateData updateData");
         }
+        System.out.println("Aggregate update data value:- " + v.toString());
         data.add(session, v);
     }
 

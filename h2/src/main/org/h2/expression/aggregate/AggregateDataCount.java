@@ -26,6 +26,7 @@ final class AggregateDataCount extends AggregateData {
     @Override
     void add(SessionLocal session, Value v) {
         if (all || v != ValueNull.INSTANCE) {
+            System.out.println("Add in here");
             count++;
         }
     }

@@ -35,6 +35,7 @@ public class SimpleRowValue extends SearchRow {
 
     @Override
     public Value getValue(int idx) {
+        System.out.println("This is getValue method in MVTable");
         if (idx == ROWID_INDEX) {
             return ValueBigint.get(getKey());
         }

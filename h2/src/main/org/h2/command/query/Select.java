@@ -419,6 +419,7 @@ public class Select extends Query {
     }
 
     boolean isConditionMetForUpdate() {
+        System.out.println("isConditionMetForUpdate method in Select.java");
         if (isConditionMet()) {
             int count = filters.size();
             boolean notChanged = true;
@@ -446,11 +447,13 @@ public class Select extends Query {
     }
 
     boolean isConditionMet() {
+        System.out.println("isConditionMet method in Select.java");
         return condition == null || condition.getBooleanValue(session);
     }
 
     private void queryWindow(int columnCount, LocalResult result, long offset, boolean quickOffset) {
         initGroupData(columnCount);
+        System.out.println();
         try {
             gatherGroup(columnCount, DataAnalysisOperation.STAGE_WINDOW);
             processGroupResult(columnCount, result, offset, quickOffset, false);
@@ -514,14 +517,17 @@ public class Select extends Query {
     private void gatherGroup(int columnCount, int stage) {
         long rowNumber = 0;
         setCurrentRowNumber(0);
+        System.out.println("\nIMPORTANT:-TODO\nWe need to check if COUNT in here for a column and then get the map and get the 1 and 0 values. Iterate only for 1s in there\n");
         while (topTableFilter.next()) {
+            System.out.println("============================================This is the place where row by row start for each row.");
             setCurrentRowNumber(rowNumber + 1);
             if (isForUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                 rowNumber++;
                 groupData.nextSource();
                 updateAgg(columnCount, stage);
             }
-        }
+            System.out.println("============================================This is the place where row by row end for each row.");
+            }
         groupData.done();
     }
 
@@ -532,10 +538,12 @@ public class Select extends Query {
      * @param stage see STAGE_RESET/STAGE_GROUP/STAGE_WINDOW in DataAnalysisOperation
      */
     void updateAgg(int columnCount, int stage) {
+        System.out.println("columnCount :- " + columnCount);
         for (int i = 0; i < columnCount; i++) {
             if ((groupByExpression == null || !groupByExpression[i])
                     && (groupByCopies == null || groupByCopies[i] < 0)) {
                 Expression expr = expressions.get(i);
+                System.out.println("This is updateAgg methos for " + expr.getClass().getSimpleName());
                 expr.updateAggregate(session, stage);
             }
         }
@@ -577,7 +585,9 @@ public class Select extends Query {
                     continue;
                 }
             }
+            System.out.println("This is get value in Line 580 " + expressions.get(i).getClass().getSimpleName());
             row[i] = expressions.get(i).getValue(session);
+            System.out.println("This is get value in Line 580");
         }
         return row;
     }
@@ -725,10 +735,13 @@ public class Select extends Query {
             limitRows = Long.MAX_VALUE;
         }
         Value[] row = null;
+        System.out.println("Check getRowCount() and next()");
+        System.out.println("\nTODO://\n We need to find the columns of (AND OR Operation Take place) and then take the bitmap operation and get row of that rows only in here\n");
         while (result.getRowCount() < limitRows && lazyResult.next()) {
             row = lazyResult.currentRow();
             result.addRow(row);
         }
+        System.out.println("After getRowCount() and next()");
         if (limitRows != Long.MAX_VALUE && withTies && sort != null && row != null) {
             Value[] expected = row;
             while (lazyResult.next()) {
@@ -756,6 +769,7 @@ public class Select extends Query {
         for (int i = 0; i < columnCount; i++) {
             Expression expr = expressions.get(i);
             row[i] = expr.getValue(session);
+            System.out.println("This is get value in Line 760, Query Quick");
         }
         if (!skipResult) {
             result.addRow(row);
@@ -764,6 +778,7 @@ public class Select extends Query {
 
     @Override
     protected ResultInterface queryWithoutCache(long maxRows, ResultTarget target) {
+        System.out.println("This is queryWithoutCache Method");
         disableLazyForJoinSubqueries(topTableFilter);
         OffsetFetch offsetFetch = getOffsetFetch(maxRows);
         long offset = offsetFetch.offset;
@@ -815,22 +830,29 @@ public class Select extends Query {
             long limit = fetchPercent ? -1 : fetch;
             System.out.println("Count :- is Quick Aggregate Query " + isQuickAggregateQuery);
             if (isQuickAggregateQuery) {
+                System.out.println("This is above to execute isQuickAggregateQuery Method");
                 queryQuick(columnCount, to, quickOffset && offset > 0);
             } else if (isWindowQuery) {
+                System.out.println("This is above to execute isWindowQuery Method");
                 if (isGroupQuery) {
+                    System.out.println("This is above to execute isGroupQuery Method");
                     queryGroupWindow(columnCount, result, offset, quickOffset);
                 } else {
                     queryWindow(columnCount, result, offset, quickOffset);
                 }
             } else if (isGroupQuery) {
+                System.out.println("This is above to execute isGroupQuery Method");
                 if (isGroupSortedQuery) {
+                    System.out.println("This is above to execute isGroupSortedQuery Method");
                     lazyResult = queryGroupSorted(columnCount, to, offset, quickOffset);
                 } else {
                     queryGroup(columnCount, result, offset, quickOffset);
                 }
             } else if (isDistinctQuery) {
+                System.out.println("This is above to execute isDistinctQuery Method");
                 queryDistinct(to, offset, limit, withTies, quickOffset);
             } else {
+                System.out.println("This is above to execute queryFlat Method");
                 lazyResult = queryFlat(columnCount, to, offset, limit, withTies, quickOffset);
             }
             if (quickOffset) {
@@ -934,6 +956,7 @@ public class Select extends Query {
                 String replacementAlias = replacementFilter.getTableAlias();
                 for (Entry<Column, Column> entry : commonJoinColumns.entrySet()) {
                     Column left = entry.getKey(), right = entry.getValue();
+                    System.out.println("this is get value method in line 939");
                     if (!filter.isCommonJoinColumnToExclude(right)
                             && (except == null || except.remove(left) == null && except.remove(right) == null)) {
                         Database database = session.getDatabase();
@@ -1815,6 +1838,7 @@ public class Select extends Query {
 
         @Override
         protected Value[] fetchNextRow() {
+            System.out.println("This is the place where next row get and value cmpare for Boolean And and OR operations");
             while (topTableFilter.next()) {
                 setCurrentRowNumber(rowNumber + 1);
                 // This method may lock rows
@@ -1823,6 +1847,7 @@ public class Select extends Query {
                     Value[] row = new Value[columnCount];
                     for (int i = 0; i < columnCount; i++) {
                         Expression expr = expressions.get(i);
+                        System.out.println("Right before to get the value of expression...............................");
                         row[i] = expr.getValue(getSession());
                     }
                     return row;
@@ -1884,6 +1909,7 @@ public class Select extends Query {
                         int idx = groupIndex[i];
                         Expression expr = expressions.get(idx);
                         keyValues[i] = expr.getValue(getSession());
+                        System.out.println("This is get value in Line 1890");
                     }
 
                     Value[] row = null;

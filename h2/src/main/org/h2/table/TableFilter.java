@@ -1014,26 +1014,33 @@ public class TableFilter implements ColumnResolver {
 
     @Override
     public Value getValue(Column column) {
+        System.out.print("this is table Filter getvalue Method");
         if (currentSearchRow == null) {
             return null;
         }
         int columnId = column.getColumnId();
         if (columnId == -1) {
+            System.out.println("1111111111111111111111111111111111111111111111111111111");
             return ValueBigint.get(currentSearchRow.getKey());
         }
         if (current == null) {
+            System.out.println("22222222222222222222222222222222222222222222222222222222");
             Value v = currentSearchRow.getValue(columnId);
             if (v != null) {
+                System.out.println("3333333333333333333333333333333333333333333333333333333");
                 return v;
             }
             if (columnId == column.getTable().getMainIndexColumn()) {
+                System.out.println("44444444444444444444444444444444444444444444444444444444");
                 return getDelegatedValue(column);
             }
             current = cursor.get();
             if (current == null) {
+                System.out.println("555555555555555555555555555555555555555555555555555555555");
                 return ValueNull.INSTANCE;
             }
         }
+        System.out.println("66666666666666666666666666666666666666666666666666666666666666");
         return current.getValue(columnId);
     }
 

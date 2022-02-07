@@ -271,7 +271,9 @@ public final class ExpressionColumn extends Expression {
     @Override
     public Value getValue(SessionLocal session) {
         Select select = columnResolver.getSelect();
+        System.out.println("This is count method in ExpressionColumn.getvalue method");
         if (select != null) {
+            System.out.println("This is count method in ExpressionColumn.getvalue method, Select is not null here");
             SelectGroups groupData = select.getGroupDataIfCurrent(false);
             if (groupData != null) {
                 Value v = (Value) groupData.getCurrentGroupExprData(this);
@@ -283,13 +285,20 @@ public final class ExpressionColumn extends Expression {
                 }
             }
         }
+        System.out.println("Ready to find the column count..................");
         Value value = columnResolver.getValue(column);
+        if (value != null) {
+            System.out.println("The value is " + value.toString());
+        }
+
         if (value == null) {
             if (select == null) {
                 throw DbException.get(ErrorCode.NULL_NOT_ALLOWED, getTraceSQL());
             } else {
                 throw DbException.get(ErrorCode.MUST_GROUP_BY_COLUMN_1, getTraceSQL());
             }
+        } else {
+            System.out.println("Value got not null in here");
         }
         return value;
     }
