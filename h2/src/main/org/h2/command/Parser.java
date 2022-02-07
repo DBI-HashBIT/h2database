@@ -2780,6 +2780,7 @@ public class Parser {
         }
         int start = tokenIndex;
         if (readIf(SELECT)) {
+            System.out.println("Select Keyword Found");
             return parseSelect(start);
         } else if (readIf(TABLE)) {
             return parseExplicitTable(start);
@@ -2821,6 +2822,7 @@ public class Parser {
     }
 
     private void parseSelectExpressions(Select command) {
+        System.out.println("This is parseSelectExpressions method");
         if (database.getMode().topInSelect && readIf("TOP")) {
             Select temp = currentSelect;
             // make sure aggregate functions will not work in TOP and LIMIT
@@ -2840,6 +2842,7 @@ public class Parser {
             currentSelect = temp;
         }
         if (readIf(DISTINCT)) {
+            System.out.println("This method reads Select Distinct");
             if (readIf(ON)) {
                 read(OPEN_PAREN);
                 ArrayList<Expression> distinctExpressions = Utils.newSmallArrayList();
@@ -2856,6 +2859,7 @@ public class Parser {
         ArrayList<Expression> expressions = Utils.newSmallArrayList();
         do {
             if (readIf(ASTERISK)) {
+                System.out.println("Read Select *=> Add wild card to expressions");
                 expressions.add(parseWildcard(null, null));
             } else {
                 switch (currentTokenType) {
@@ -2871,13 +2875,19 @@ public class Parser {
                 case CLOSE_PAREN:
                 case SEMICOLON:
                 case END_OF_INPUT:
+                    System.out.println("Read From in select Expression method and break");
                     break;
                 default:
+                    System.out.println("this line will run when there is comma separated anyother thing except '*'");
                     Expression expr = readExpression();
                     if (readIf(AS) || isIdentifier()) {
+                        System.out.println("This has as keyword or a identifier");
                         expr = new Alias(expr, readIdentifier(), database.getMode().aliasColumnName);
                     }
+                    
                     expressions.add(expr);
+                    System.out.println("Add expression because of no *");
+                    System.out.println("add " + expr.getClass().getSimpleName());
                 }
             }
         } while (readIf(COMMA));
@@ -2885,6 +2895,7 @@ public class Parser {
     }
 
     private Select parseSelect(int start) {
+        System.out.println("This is inside parse select method");
         Select command = new Select(session, currentSelect);
         Select oldSelect = currentSelect;
         Prepared oldPrepared = currentPrepared;
@@ -2897,9 +2908,11 @@ public class Parser {
                     currentSelect, 0, null);
             command.addTableFilter(filter, true);
         } else {
+            System.out.println("Here we parse the From part");
             parseSelectFromPart(command);
         }
         if (readIf(WHERE)) {
+            System.out.println("Here we parse the Where part");
             command.addCondition(readExpressionWithGlobalConditions());
         }
         // the group by is read for the outer select (or not a select)
@@ -3063,12 +3076,18 @@ public class Parser {
     }
 
     private Expression readExpressionWithGlobalConditions() {
+        System.out.println("---------------------------We start Where");
         Expression r = readCondition();
+        System.out.println("Left side of the AND in Where " + r.getClass().getSimpleName());
         if (readIf(AND)) {
-            r = readAnd(new ConditionAndOr(ConditionAndOr.AND, r, readCondition()));
+            System.out.println("We start AND Inside Where");
+            Expression ri = readCondition();
+            System.out.println("right side of the AND in Where " + ri.getClass().getSimpleName());
+            r = readAnd(new ConditionAndOr(ConditionAndOr.AND, r, ri));
         } else if (readIf("_LOCAL_AND_GLOBAL_")) {
             r = readAnd(new ConditionLocalAndGlobal(r, readCondition()));
         }
+        System.out.println("---------------------------We end Where");
         return readExpressionPart2(r);
     }
 
@@ -3077,11 +3096,15 @@ public class Parser {
     }
 
     private Expression readExpressionPart2(Expression r1) {
+        System.out.println("This is readExpression2 Function");
         if (!readIf(OR)) {
             return r1;
         }
         Expression r2 = readAnd(readCondition());
         if (!readIf(OR)) {
+            System.out.println("Add expression in here, This should be a and operation, ex:- A OR B, Constructor contains A OR B");
+            System.out.println("Left expression class in OR " + r1.getClass().getSimpleName());
+            System.out.println("Left expression class in OR " + r2.getClass().getSimpleName());
             return new ConditionAndOr(ConditionAndOr.OR, r1, r2);
         }
         // Above logic to avoid allocating an ArrayList for the common case.
@@ -3091,6 +3114,7 @@ public class Parser {
         expressions.add(r1);
         expressions.add(r2);
         do {
+            System.out.println("Add expression in here, This should be a serious of and operation, ex:- A OR B, Array contains A OR B");
             expressions.add(readAnd(readCondition()));
         }
         while (readIf(OR));
@@ -3098,13 +3122,19 @@ public class Parser {
     }
 
     private Expression readAnd(Expression r) {
+        System.out.println("This is readAnd Function");
         if (!readIf(AND)) {
             return r;
         }
+        System.out.println("This print statement to check the lines inside readAnd method:-  currentTokenType " + currentTokenType);
         Expression expr2 = readCondition();
         if (!readIf(AND)) {
+            System.out.println("Add expression in here, This should be a and operation, ex:- A and B, Constructor contains A and B");
+            System.out.println("Left expression class in AND " + r.getClass().getSimpleName());
+            System.out.println("Left expression class in AND " + expr2.getClass().getSimpleName());
             return new ConditionAndOr(ConditionAndOr.AND, r, expr2);
         }
+        System.out.println("This print statement to check the lines inside readAnd method:-  currentTokenType " + currentTokenType);
         // Above logic to avoid allocating an ArrayList for the common case.
         // We combine into ConditionAndOrN here rather than letting the optimisation
         // pass do it, to avoid StackOverflowError during stuff like mapColumns.
@@ -3112,6 +3142,7 @@ public class Parser {
         expressions.add(r);
         expressions.add(expr2);
         do {
+            System.out.println("Add expression in here, This should be a serious of and operation, ex:- A and B, Array contains A and B");
             expressions.add(readCondition());
         }
         while (readIf(AND));
@@ -3269,8 +3300,10 @@ public class Parser {
                 if (whenOperand || !session.isQuirksMode()) {
                     throw getSyntaxError();
                 }
+                Expression r1234 = readConcat();
                 left = new Comparison(isNot ? Comparison.NOT_EQUAL_NULL_SAFE : Comparison.EQUAL_NULL_SAFE, left,
-                        readConcat(), false);
+                        r1234, false);
+                System.out.println("Equal Sign got found :- " + left + " , " + r1234);
             }
         }
         return left;
@@ -3366,6 +3399,7 @@ public class Parser {
                 left = new Comparison(compareType, left, readConcat(), whenOperand);
             }
         } else {
+            System.out.println("Read Comparison in Parser? ");
             left = new Comparison(compareType, left, readConcat(), whenOperand);
         }
         return left;
@@ -3443,6 +3477,7 @@ public class Parser {
     }
 
     private Expression readAggregate(AggregateType aggregateType, String aggregateName) {
+        System.out.println("This is read Aggregate Function");
         if (currentSelect == null) {
             expectedList = null;
             throw getSyntaxError();
@@ -3451,14 +3486,17 @@ public class Parser {
         switch (aggregateType) {
         case COUNT:
             if (readIf(ASTERISK)) {
+                System.out.println("This is count with * => Count(*)");
                 r = new Aggregate(AggregateType.COUNT_ALL, new Expression[0], currentSelect, false);
             } else {
                 boolean distinct = readDistinctAgg();
                 Expression on = readExpression();
                 if (on instanceof Wildcard && !distinct) {
+                    System.out.println("Upper condition in read Aggregration :- ");
                     // PostgreSQL compatibility: count(t.*)
                     r = new Aggregate(AggregateType.COUNT_ALL, new Expression[0], currentSelect, false);
                 } else {
+                    System.out.println("Lower condition in read Aggregration :- ");
                     r = new Aggregate(AggregateType.COUNT, new Expression[] { on }, currentSelect, distinct);
                 }
             }
@@ -5204,6 +5242,7 @@ public class Parser {
             //$FALL-THROUGH$
         case IDENTIFIER:
             String name = currentToken;
+            System.out.println("This is the name of the identifier found:- " + name);
             boolean quoted = token.isQuoted();
             read();
             if (readIf(OPEN_PAREN)) {
@@ -5455,6 +5494,7 @@ public class Parser {
             }
             break;
         }
+        System.out.println("Count Coloumn created as a Expression in here :- name = " + name + " ; quoted:- " + quoted);
         return new ExpressionColumn(database, null, null, name, quoted);
     }
 
@@ -9606,6 +9646,7 @@ public class Parser {
     private static int getCompareType(int tokenType) {
         switch (tokenType) {
         case EQUAL:
+            System.out.println("This is Equal Compare");
             return Comparison.EQUAL;
         case BIGGER_EQUAL:
             return Comparison.BIGGER_EQUAL;
