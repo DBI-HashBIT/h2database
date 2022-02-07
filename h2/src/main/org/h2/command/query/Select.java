@@ -813,6 +813,7 @@ public class Select extends Query {
         if (fetch != 0) {
             // Cannot apply limit now if percent is specified
             long limit = fetchPercent ? -1 : fetch;
+            System.out.println("Count :- is Quick Aggregate Query " + isQuickAggregateQuery);
             if (isQuickAggregateQuery) {
                 queryQuick(columnCount, to, quickOffset && offset > 0);
             } else if (isWindowQuery) {

@@ -504,6 +504,7 @@ public class Aggregate extends AbstractAggregate implements ExpressionWithFlags 
         switch (aggregateType) {
         case COUNT:
         case COUNT_ALL:
+            System.out.println("This is the method that get results for count and count all in aggregate expression getvalue method");
             Table table = select.getTopTableFilter().getTable();
             return ValueBigint.get(table.getRowCount(session));
         case MIN:
