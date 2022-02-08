@@ -375,7 +375,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
      * @param session the session
      * @return the map
      */
-    private TransactionMap<SearchRow,Value> getMap(SessionLocal session) {
+    public TransactionMap<SearchRow,Value> getTransactionMapMap(SessionLocal session) {
         if (session == null) {
             return dataMap;
         }

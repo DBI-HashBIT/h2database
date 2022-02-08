@@ -259,7 +259,7 @@ public class Aggregate extends AbstractAggregate implements ExpressionWithFlags 
 
     public Column getColumnFromAggregateIndex(int index) {
         //TODO Handle Errors
-        return agg[index].getColumn();
+        return args[index].getColumn();
     }
 
     private void updateData(SessionLocal session, AggregateData data, Value v, Value[] remembered) {

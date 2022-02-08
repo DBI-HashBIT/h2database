@@ -37,6 +37,7 @@ import org.h2.expression.condition.ConditionLocalAndGlobal;
 import org.h2.expression.function.CoalesceFunction;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
+import org.h2.index.IndexHandler;
 import org.h2.index.ViewIndex;
 import org.h2.message.DbException;
 import org.h2.mode.DefaultNullOrdering;
@@ -514,7 +515,14 @@ public class Select extends Query {
     private void gatherGroup(int columnCount, int stage) {
         long rowNumber = 0;
         setCurrentRowNumber(0);
+        HashMap<Integer, ArrayList<Integer>> countBitmapIndexes = IndexHandler
+                .getValueForCountOperationWithHashBitIndexes(IndexHandler.getCountOperationIndexes(expressions), expressions);
+        ArrayList<Integer> bitmap = IndexHandler.combineBitmaps(countBitmapIndexes);
+        int i = 0;
         while (topTableFilter.next()) {
+            if(bitmap.get(i).intValue() == 0) {
+                continue;
+            }
             setCurrentRowNumber(rowNumber + 1);
             if (isForUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                 rowNumber++;

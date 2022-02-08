@@ -12,9 +12,9 @@ import org.h2.value.ValueBigint;
 
 import java.util.*;
 
-class IndexHelper {
-    private String hashBitIndexName  = "hashBitIndex";
-    public static ArrayList<Integer> getCountOperationIndexes(Expression[] expressions) {
+public class IndexHandler {
+    private static String hashBitIndexName  = "hashBitIndex";
+    public static ArrayList<Integer> getCountOperationIndexes(ArrayList<Expression> expressions) {
         int i = 0;
         Column column;
         String columnName;
@@ -25,7 +25,7 @@ class IndexHelper {
         for (Expression expression : expressions) {
             if (expression instanceof Aggregate) {
                 aggregateExpression = (Aggregate) expression;
-                if (aggregation.getAggregateType().toString().equals((AggregateType.COUNT).toString())) {
+                if (aggregateExpression.getAggregateType().toString().equals((AggregateType.COUNT).toString())) {
                     column = aggregateExpression.getColumnFromAggregateIndex(0);
                     columnName = column.getName();
                     table = column.getTable();
@@ -41,7 +41,8 @@ class IndexHelper {
         return countExpressions;
     }
 
-    public HashMap<Integer, ArrayList<Integer>> getValueForCountOperationWithHashBitIndexes(int[] countIndexes, Expression[] expressions) {
+    public static HashMap<Integer, ArrayList<Integer>> getValueForCountOperationWithHashBitIndexes(
+            ArrayList<Integer> countIndexes, ArrayList<Expression> expressions) {
         HashMap<Integer, ArrayList<Integer>> results = new HashMap<>();
         int[] tempBitmapArray= new int[]{0, 1, 0};
         Column column;
@@ -49,18 +50,51 @@ class IndexHelper {
         Table table;
         Index columnIndex;
         Aggregate aggregateExpression;
+        ArrayList<Integer> integerArray;
         for (int index : countIndexes) {
             aggregateExpression = (Aggregate) (expressions.get(index));
             column = aggregateExpression.getColumnFromAggregateIndex(0);
             columnName = column.getName();
             table = column.getTable();
             columnIndex = table.getIndexForColumn(column, false, false);
-            TransactionMap<SearchRow, Value> dataMap = columnIndex.getMap();
+            TransactionMap<SearchRow, Value> dataMap = columnIndex.getTransactionMapMap(null);
 //            get the bitmap indices array;
 //            dataMap.get(column);
-            results.put(index, new ArrayList<>(Array.asList(tempBitmapArray)));
+            integerArray = new ArrayList<Integer>(tempBitmapArray.length);
+            for (int i : tempBitmapArray) {
+                integerArray.add(i);
+            }
+            results.put(index, (integerArray));
         }
         return results;
+    }
+
+    //TODO: Check this
+    public static ArrayList<Integer> combineBitmaps(HashMap<Integer, ArrayList<Integer>> bitmaps) {
+        ArrayList<Integer> combinebitmap = null;
+        ArrayList<Integer> tempmap = null;
+        ArrayList<Integer> values;
+
+        while (bitmaps.hasNext()) {
+            Map.Entry mapElement
+                    = (Map.Entry)bitmaps.next();
+            values = (ArrayList<Integer>) mapElement.getValue();
+            if (combinebitmap == null) {
+                combinebitmap = (ArrayList<Integer>) values.clone();
+                tempmap = (ArrayList<Integer>) values.clone();
+            } else {
+                combinebitmap = new ArrayList<>();
+                for (int i = 0; i< values.size(); i++) {
+                    if(values.get(i) == 1 || tempmap.get(i) == 1) {
+                        combinebitmap.add(1);
+                    } else {
+                        combinebitmap.add(0);
+                    }
+                }
+                tempmap = (ArrayList<Integer>) combinebitmap.clone();
+            }
+        }
+        return combinebitmap;
     }
 
     public String getHashBitIndexName() {
