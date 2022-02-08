@@ -14,6 +14,7 @@ import java.util.*;
 
 public class IndexHandler {
     private static String hashBitIndexName  = "hashBitIndex";
+    private static int[] countTempBitmapArray= new int[]{0, 0, 1, 1, 1};
     public static ArrayList<Integer> getCountOperationIndexes(ArrayList<Expression> expressions) {
         int i = 0;
         Column column;
@@ -30,8 +31,8 @@ public class IndexHandler {
                     columnName = column.getName();
                     table = column.getTable();
                     columnIndex = table.getIndexForColumn(column, false, false);
-                    //TODO Combine indexes
-                    if (columnIndex.indexType.equals(hashBitIndexName) && columnIndex.indexColumns.length == 1) {
+                    //TODO Combine indexes(type). Handle there are many column for index. For now its true
+                    if (true || columnIndex.indexType.equals(hashBitIndexName) && columnIndex.indexColumns.length == 1) {
                         countExpressions.add(i);
                     }
                 }
@@ -43,8 +44,10 @@ public class IndexHandler {
 
     public static HashMap<Integer, ArrayList<Integer>> getValueForCountOperationWithHashBitIndexes(
             ArrayList<Integer> countIndexes, ArrayList<Expression> expressions) {
+        System.out.println(countIndexes);
+        System.out.println(expressions);
+        System.out.println("> Params");
         HashMap<Integer, ArrayList<Integer>> results = new HashMap<>();
-        int[] tempBitmapArray= new int[]{0, 1, 0};
         Column column;
         String columnName;
         Table table;
@@ -57,11 +60,11 @@ public class IndexHandler {
             columnName = column.getName();
             table = column.getTable();
             columnIndex = table.getIndexForColumn(column, false, false);
-            TransactionMap<SearchRow, Value> dataMap = columnIndex.getTransactionMapMap(null);
+            TransactionMap<SearchRow, Value> dataMap = columnIndex.getTransactionMap(null);
 //            get the bitmap indices array;
 //            dataMap.get(column);
-            integerArray = new ArrayList<Integer>(tempBitmapArray.length);
-            for (int i : tempBitmapArray) {
+            integerArray = new ArrayList<Integer>(countTempBitmapArray.length);
+            for (int i : countTempBitmapArray) {
                 integerArray.add(i);
             }
             results.put(index, (integerArray));
@@ -75,10 +78,11 @@ public class IndexHandler {
         ArrayList<Integer> tempmap = null;
         ArrayList<Integer> values;
 
-        while (bitmaps.hasNext()) {
-            Map.Entry mapElement
-                    = (Map.Entry)bitmaps.next();
-            values = (ArrayList<Integer>) mapElement.getValue();
+        Collection<ArrayList<Integer>> mapValues = bitmaps.values();
+        ArrayList<ArrayList<Integer>> entrySet = new ArrayList<>(mapValues);
+
+        for (ArrayList<Integer> array: entrySet) {
+            values = array;
             if (combinebitmap == null) {
                 combinebitmap = (ArrayList<Integer>) values.clone();
                 tempmap = (ArrayList<Integer>) values.clone();

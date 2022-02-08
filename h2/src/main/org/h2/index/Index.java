@@ -748,7 +748,7 @@ public abstract class Index extends SchemaObject {
      * @param session the session
      * @return the map
      */
-    public TransactionMap<SearchRow,Value> getTransactionMapMap(SessionLocal session) {
+    public TransactionMap<SearchRow,Value> getTransactionMap(SessionLocal session) {
         //TODO: Handle Null
         return null;
     }
