@@ -168,7 +168,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public void add(SessionLocal session, Row row) {
-        TransactionMap<SearchRow,Value> map = getMap(session);
+        TransactionMap<SearchRow,Value> map = getTransactionMap(session);
         SearchRow key = convertToKey(row, null);
         boolean checkRequired = uniqueColumnColumn > 0 && !mayHaveNullDuplicates(row);
         if (checkRequired) {
@@ -222,7 +222,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
     @Override
     public void remove(SessionLocal session, Row row) {
         SearchRow searchRow = convertToKey(row, null);
-        TransactionMap<SearchRow,Value> map = getMap(session);
+        TransactionMap<SearchRow,Value> map = getTransactionMap(session);
         try {
             if (map.remove(searchRow) == null) {
                 StringBuilder builder = new StringBuilder();
@@ -265,7 +265,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
     private Cursor find(SessionLocal session, SearchRow first, boolean bigger, SearchRow last) {
         SearchRow min = convertToKey(first, bigger);
         SearchRow max = convertToKey(last, Boolean.TRUE);
-        return new MVStoreCursor(session, getMap(session).keyIterator(min, max), mvTable);
+        return new MVStoreCursor(session, getTransactionMap(session).keyIterator(min, max), mvTable);
     }
 
     private SearchRow convertToKey(SearchRow r, Boolean minMax) {
@@ -300,7 +300,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public void remove(SessionLocal session) {
-        TransactionMap<SearchRow,Value> map = getMap(session);
+        TransactionMap<SearchRow,Value> map = getTransactionMap(session);
         if (!map.isClosed()) {
             Transaction t = session.getTransaction();
             t.removeMap(map);
@@ -309,7 +309,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public void truncate(SessionLocal session) {
-        TransactionMap<SearchRow,Value> map = getMap(session);
+        TransactionMap<SearchRow,Value> map = getTransactionMap(session);
         map.clear();
     }
 
@@ -320,7 +320,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public Cursor findFirstOrLast(SessionLocal session, boolean first) {
-        TransactionMap.TMIterator<SearchRow, Value, SearchRow> iter = getMap(session).keyIterator(null, !first);
+        TransactionMap.TMIterator<SearchRow, Value, SearchRow> iter = getTransactionMap(session).keyIterator(null, !first);
         for (SearchRow key; (key = iter.fetchNext()) != null;) {
             if (key.getValue(columnIds[0]) != ValueNull.INSTANCE) {
                 return new SingleRowCursor(mvTable.getRow(session, key.getKey()));
@@ -340,7 +340,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public long getRowCount(SessionLocal session) {
-        TransactionMap<SearchRow,Value> map = getMap(session);
+        TransactionMap<SearchRow,Value> map = getTransactionMap(session);
         return map.sizeAsLong();
     }
 
@@ -375,7 +375,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
      * @param session the session
      * @return the map
      */
-    private TransactionMap<SearchRow,Value> getMap(SessionLocal session) {
+    public TransactionMap<SearchRow,Value> getTransactionMap(SessionLocal session) {
         if (session == null) {
             return dataMap;
         }
