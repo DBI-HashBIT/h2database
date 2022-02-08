@@ -303,6 +303,7 @@ public final class ExpressionColumn extends Expression {
     public void setEvaluatable(TableFilter tableFilter, boolean b) {
     }
 
+    @override
     public Column getColumn() {
         return column;
     }

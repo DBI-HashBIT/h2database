@@ -354,6 +354,11 @@ public abstract class Expression implements HasSQL, Typed {
         return getAlias(session, columnIndex);
     }
 
+    public Column getColumn() {
+        //TODO: Implement this
+        return null;
+    }
+
     /**
      * Get the schema name, or null
      *
