@@ -3399,8 +3399,9 @@ public class Parser {
                 left = new Comparison(compareType, left, readConcat(), whenOperand);
             }
         } else {
-            System.out.println("Read Comparison in Parser? ");
-            left = new Comparison(compareType, left, readConcat(), whenOperand);
+            Expression rrr = readConcat();
+            System.out.println("Read Comparison in Parser? " + left.getClass().getSimpleName() + " :- " + rrr.getClass().getSimpleName());
+            left = new Comparison(compareType, left, rrr, whenOperand);
         }
         return left;
     }
