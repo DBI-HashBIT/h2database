@@ -285,7 +285,7 @@ public final class ExpressionColumn extends Expression {
                 }
             }
         }
-        System.out.println("Ready to find the column count..................");
+        System.out.println("Ready to find the column " + column.getName() + " count..................");
         Value value = columnResolver.getValue(column);
         if (value != null) {
             System.out.println("The value is " + value.toString());

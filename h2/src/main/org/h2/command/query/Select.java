@@ -504,6 +504,23 @@ public class Select extends Query {
         groupData.reset();
     }
 
+    // /**
+    //  * Update any aggregate expressions with the query stage.
+    //  * @param columnCount number of columns
+    //  * @param stage see STAGE_RESET/STAGE_GROUP/STAGE_WINDOW in DataAnalysisOperation
+    //  */
+    // void updateAgg(int columnCount, int stage) {
+    //     System.out.println("columnCount :- " + columnCount);
+    //     for (int i = 0; i < columnCount; i++) {
+    //         if ((groupByExpression == null || !groupByExpression[i])
+    //                 && (groupByCopies == null || groupByCopies[i] < 0)) {
+    //             Expression expr = expressions.get(i);
+    //             System.out.println("This is updateAgg methos for " + expr.getClass().getSimpleName());
+    //             expr.updateAggregate(session, stage);
+    //         }
+    //     }
+    // }
+
     void setGroupData(final SelectGroups groupData) {
         this.groupData = groupData;
         topTableFilter.visit(f -> {
@@ -517,7 +534,9 @@ public class Select extends Query {
     private void gatherGroup(int columnCount, int stage) {
         long rowNumber = 0;
         setCurrentRowNumber(0);
-        System.out.println("\nIMPORTANT:-TODO\nWe need to check if COUNT in here for a column and then get the map and get the 1 and 0 values. Iterate only for 1s in there\n");
+        System.out.println("\nIMPORTANT:-TODO\nWe need to check if COUNT in here for a column and then get the map and get the 1 and 0 values. Iterate only for 1s in there\n " +
+          "Index.getId can use to get the map. Take the table from Count => Column Expression and then iterate through the indexes in the table and then check there is a hash bit there.\n" +
+          " then directly get the relevent rows [11001] and iterate throgh only 1\n");
         while (topTableFilter.next()) {
             System.out.println("============================================This is the place where row by row start for each row.");
             setCurrentRowNumber(rowNumber + 1);
@@ -529,24 +548,6 @@ public class Select extends Query {
             System.out.println("============================================This is the place where row by row end for each row.");
             }
         groupData.done();
-    }
-
-
-    /**
-     * Update any aggregate expressions with the query stage.
-     * @param columnCount number of columns
-     * @param stage see STAGE_RESET/STAGE_GROUP/STAGE_WINDOW in DataAnalysisOperation
-     */
-    void updateAgg(int columnCount, int stage) {
-        System.out.println("columnCount :- " + columnCount);
-        for (int i = 0; i < columnCount; i++) {
-            if ((groupByExpression == null || !groupByExpression[i])
-                    && (groupByCopies == null || groupByCopies[i] < 0)) {
-                Expression expr = expressions.get(i);
-                System.out.println("This is updateAgg methos for " + expr.getClass().getSimpleName());
-                expr.updateAggregate(session, stage);
-            }
-        }
     }
 
     private void processGroupResult(int columnCount, LocalResult result, long offset, boolean quickOffset,
@@ -1869,6 +1870,23 @@ public class Select extends Query {
             return false;
         }
 
+    }
+
+    /**
+     * Update any aggregate expressions with the query stage.
+     * @param columnCount number of columns
+     * @param stage see STAGE_RESET/STAGE_GROUP/STAGE_WINDOW in DataAnalysisOperation
+     */
+    void updateAgg(int columnCount, int stage) {
+        System.out.println("columnCount :- " + columnCount);
+        for (int i = 0; i < columnCount; i++) {
+            if ((groupByExpression == null || !groupByExpression[i])
+                    && (groupByCopies == null || groupByCopies[i] < 0)) {
+                Expression expr = expressions.get(i);
+                System.out.println("This is updateAgg methos for " + expr.getClass().getSimpleName());
+                expr.updateAggregate(session, stage);
+            }
+        }
     }
 
     /**
