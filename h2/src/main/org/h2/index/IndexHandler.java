@@ -44,9 +44,6 @@ public class IndexHandler {
 
     public static HashMap<Integer, ArrayList<Integer>> getValueForCountOperationWithHashBitIndexes(
             ArrayList<Integer> countIndexes, ArrayList<Expression> expressions) {
-        System.out.println(countIndexes);
-        System.out.println(expressions);
-        System.out.println("> Params");
         HashMap<Integer, ArrayList<Integer>> results = new HashMap<>();
         Column column;
         String columnName;

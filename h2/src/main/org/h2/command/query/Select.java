@@ -517,21 +517,13 @@ public class Select extends Query {
         setCurrentRowNumber(0);
         HashMap<Integer, ArrayList<Integer>> countBitmapIndexes = IndexHandler
                 .getValueForCountOperationWithHashBitIndexes(IndexHandler.getCountOperationIndexes(expressions), expressions);
-        System.out.println("count Bitmap Indices");
-        System.out.println(countBitmapIndexes);
-        System.out.println("count Bitmap Indices");
         ArrayList<Integer> bitmap = IndexHandler.combineBitmaps(countBitmapIndexes);
-        System.out.println("This is Bitmap");
-        System.out.println(bitmap);
-        System.out.println("This is Bitmap");
         int i = -1;
         while (topTableFilter.next()) {
             i++;
-            System.out.println("bitmap.get(i).intValue() " + bitmap.get(i).intValue());
             if(bitmap !=null && bitmap.get(i).longValue() == 0) {
                 continue;
             }
-            System.out.println("Iterate Here");
             setCurrentRowNumber(rowNumber + 1);
             if (isForUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                 rowNumber++;
