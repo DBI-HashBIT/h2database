@@ -132,6 +132,11 @@ public class IndexHandler {
         if (type == ConditionAndOr.OR) {
         } else if (type == ConditionAndOr.AND) {
         }
+        if (type == ConditionAndOr.AND) {
+            System.out.println(left + " AND " + right + " => " + results);
+        } else {
+            System.out.println(left + " OR " + right + " => " + results);
+        }
         return results;
     }
 

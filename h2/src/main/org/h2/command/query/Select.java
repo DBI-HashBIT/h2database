@@ -157,6 +157,8 @@ public class Select extends Query {
 
     private HashMap<String, Window> windows;
 
+    private ArrayList<Integer> andOrBitMap;
+
     public Select(SessionLocal session, Select parentSelect) {
         super(session);
         this.parentSelect = parentSelect;
@@ -515,31 +517,21 @@ public class Select extends Query {
     private void gatherGroup(int columnCount, int stage) {
         long rowNumber = 0;
         setCurrentRowNumber(0);
-        int i = -1;
         while (topTableFilter.next()) {
-            i++;
             setCurrentRowNumber(rowNumber + 1);
+            ArrayList<Integer> andOrBitmap = getAndOrBitmap();
+            //TODO: Handle Overflow Exceptions or make it long
+            if (andOrBitMap !=null && andOrBitMap.size() > 0 && andOrBitMap.get(Math.toIntExact(rowNumber)).longValue() == 0) {
+                continue;
+            }
             if (isForUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                 rowNumber++;
                 groupData.nextSource();
-                updateAgg(columnCount, stage, i, getCountExpressionIndexes());
+                updateAgg(columnCount, stage);
             }
         }
         groupData.done();
     }
-
-    public ArrayList<Integer> getCountbitmap(ArrayList<Integer> countIndexes) {
-        //TODO Do we need to reverse the bitmap
-        HashMap<Integer, ArrayList<Integer>> countBitmapIndexes = IndexHandler
-                .getValueForCountOperationWithHashBitIndexes(countIndexes, expressions);
-        ArrayList<Integer> bitmap = IndexHandler.combineBitmapsForCountOperations(countBitmapIndexes);
-        return bitmap;
-    }
-
-    public ArrayList<Integer> getCountExpressionIndexes() {
-        return IndexHandler.getCountOperationIndexes(expressions);
-    }
-
 
     /**
      * Update any aggregate expressions with the query stage.
@@ -547,23 +539,10 @@ public class Select extends Query {
      * @param stage see STAGE_RESET/STAGE_GROUP/STAGE_WINDOW in DataAnalysisOperation
      */
     void updateAgg(int columnCount, int stage) {
-        updateAgg(columnCount, stage, -1, null);
-    }
-
-    void updateAgg(int columnCount, int stage, int rowIndex, ArrayList<Integer> countIndexes) {
-        ArrayList<Integer> countBitmap = null;
-        if (rowIndex > 0 && countIndexes != null) {
-            countBitmap = getCountbitmap(countIndexes);
-        }
         for (int i = 0; i < columnCount; i++) {
             if ((groupByExpression == null || !groupByExpression[i])
                     && (groupByCopies == null || groupByCopies[i] < 0)) {
                 Expression expr = expressions.get(i);
-                if (countIndexes != null && countIndexes.contains(i)) {
-                    if (countBitmap !=null && countBitmap.size() > 0 && countBitmap.get(i).longValue() == 0) {
-                        continue;
-                    }
-                }
                 expr.updateAggregate(session, stage);
             }
         }
@@ -735,6 +714,17 @@ public class Select extends Query {
         }
     }
 
+    private void generateAndOrBitMap() {
+        this.andOrBitMap = IndexHandler.andOrOperationIndexes(condition);
+    }
+
+    private ArrayList<Integer> getAndOrBitmap() {
+        if (this.andOrBitMap == null) {
+            generateAndOrBitMap();
+        }
+        return this.andOrBitMap;
+    }
+
     private LazyResult queryFlat(int columnCount, ResultTarget result, long offset, long limitRows, boolean withTies,
             boolean quickOffset) {
         if (limitRows > 0 && offset > 0 && !quickOffset) {
@@ -753,13 +743,7 @@ public class Select extends Query {
             limitRows = Long.MAX_VALUE;
         }
         Value[] row = null;
-        ArrayList<Integer> andOrBitMap = IndexHandler.andOrOperationIndexes(condition);
-        int i = -1;
         while (result.getRowCount() < limitRows && lazyResult.next()) {
-            i++;
-            if (andOrBitMap !=null && andOrBitMap.get(i).longValue() == 0) {
-                continue;
-            }
             row = lazyResult.currentRow();
             result.addRow(row);
         }
@@ -1850,6 +1834,11 @@ public class Select extends Query {
         protected Value[] fetchNextRow() {
             while (topTableFilter.next()) {
                 setCurrentRowNumber(rowNumber + 1);
+                ArrayList<Integer> andOrBitmap = getAndOrBitmap();
+                //TODO: Handle Overflow Exceptions or make it long
+                if (andOrBitMap !=null && andOrBitMap.size() > 0 && andOrBitMap.get(Math.toIntExact(rowNumber)).longValue() == 0) {
+                    continue;
+                }
                 // This method may lock rows
                 if (forUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                     ++rowNumber;
@@ -1868,6 +1857,11 @@ public class Select extends Query {
         protected boolean skipNextRow() {
             while (topTableFilter.next()) {
                 setCurrentRowNumber(rowNumber + 1);
+                ArrayList<Integer> andOrBitmap = getAndOrBitmap();
+                //TODO: Handle Overflow Exceptions or make it long
+                if (andOrBitMap !=null && andOrBitMap.size() > 0 && andOrBitMap.get(Math.toIntExact(rowNumber)).longValue() == 0) {
+                    continue;
+                }
                 // This method does not lock rows
                 if (isConditionMet()) {
                     ++rowNumber;
@@ -1908,6 +1902,11 @@ public class Select extends Query {
         protected Value[] fetchNextRow() {
             while (topTableFilter.next()) {
                 setCurrentRowNumber(rowNumber + 1);
+                ArrayList<Integer> andOrBitmap = getAndOrBitmap();
+                //TODO: Handle Overflow Exceptions or make it long
+                if (andOrBitMap !=null && andOrBitMap.size() > 0 && andOrBitMap.get(Math.toIntExact(rowNumber)).longValue() == 0) {
+                    continue;
+                }
                 if (isConditionMet()) {
                     rowNumber++;
                     int groupSize = groupIndex.length;
