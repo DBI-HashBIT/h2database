@@ -517,13 +517,19 @@ public class Select extends Query {
     private void gatherGroup(int columnCount, int stage) {
         long rowNumber = 0;
         setCurrentRowNumber(0);
+        ArrayList<Integer> andOrBitmap = getAndOrBitmap();
+        System.out.println("Bitmap is :- " + andOrBitmap);
+        int rowIndexCounter = -1;
         while (topTableFilter.next()) {
+            rowIndexCounter++;
             setCurrentRowNumber(rowNumber + 1);
-            ArrayList<Integer> andOrBitmap = getAndOrBitmap();
+            System.out.println("Bitmap value for Current Row " + " " + rowNumber + " :- " + andOrBitMap.get(rowIndexCounter).longValue());
             //TODO: Handle Overflow Exceptions or make it long
-            if (andOrBitMap !=null && andOrBitMap.size() > 0 && andOrBitMap.get(Math.toIntExact(rowNumber)).longValue() == 0) {
+            if (andOrBitMap !=null && andOrBitMap.size() > 0 && andOrBitMap.get(rowIndexCounter).longValue() == 0) {
+                System.out.println("Avoid4");
                 continue;
             }
+                System.out.println("Iterate4");
             if (isForUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                 rowNumber++;
                 groupData.nextSource();
@@ -1832,13 +1838,19 @@ public class Select extends Query {
 
         @Override
         protected Value[] fetchNextRow() {
+            ArrayList<Integer> andOrBitmap = getAndOrBitmap();
+            System.out.println("Bitmap is :- " + andOrBitmap);
+            int rowIndexCounter = andOrBitMap.size();
             while (topTableFilter.next()) {
+                rowIndexCounter--;
                 setCurrentRowNumber(rowNumber + 1);
-                ArrayList<Integer> andOrBitmap = getAndOrBitmap();
+                System.out.println("Bitmap value for Current Row" + " " + rowNumber + " :- "  + andOrBitMap.get(rowIndexCounter).longValue());
                 //TODO: Handle Overflow Exceptions or make it long
-                if (andOrBitMap !=null && andOrBitMap.size() > 0 && andOrBitMap.get(Math.toIntExact(rowNumber)).longValue() == 0) {
+                if (andOrBitMap !=null && andOrBitMap.size() > 0 && andOrBitMap.get(rowIndexCounter).longValue() == 0) {
+                    System.out.println("Avoid1");
                     continue;
                 }
+                System.out.println("Iterate1");
                 // This method may lock rows
                 if (forUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                     ++rowNumber;
@@ -1855,13 +1867,16 @@ public class Select extends Query {
 
         @Override
         protected boolean skipNextRow() {
+            ArrayList<Integer> andOrBitmap = getAndOrBitmap();
+            System.out.println("Bitmap is :- " + andOrBitmap);
             while (topTableFilter.next()) {
                 setCurrentRowNumber(rowNumber + 1);
-                ArrayList<Integer> andOrBitmap = getAndOrBitmap();
                 //TODO: Handle Overflow Exceptions or make it long
                 if (andOrBitMap !=null && andOrBitMap.size() > 0 && andOrBitMap.get(Math.toIntExact(rowNumber)).longValue() == 0) {
+                    System.out.println("Avoid2");
                     continue;
                 }
+                System.out.println("Iterate2");
                 // This method does not lock rows
                 if (isConditionMet()) {
                     ++rowNumber;
@@ -1900,13 +1915,16 @@ public class Select extends Query {
 
         @Override
         protected Value[] fetchNextRow() {
+            ArrayList<Integer> andOrBitmap = getAndOrBitmap();
+            System.out.println("Bitmap is :- " + andOrBitmap);
             while (topTableFilter.next()) {
                 setCurrentRowNumber(rowNumber + 1);
-                ArrayList<Integer> andOrBitmap = getAndOrBitmap();
                 //TODO: Handle Overflow Exceptions or make it long
                 if (andOrBitMap !=null && andOrBitMap.size() > 0 && andOrBitMap.get(Math.toIntExact(rowNumber)).longValue() == 0) {
+                    System.out.println("Avoid3");
                     continue;
                 }
+                System.out.println("Iterate3");
                 if (isConditionMet()) {
                     rowNumber++;
                     int groupSize = groupIndex.length;
