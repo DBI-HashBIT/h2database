@@ -7,6 +7,7 @@ import org.h2.expression.aggregate.Aggregate;
 import org.h2.expression.aggregate.AggregateType;
 import org.h2.expression.condition.Comparison;
 import org.h2.expression.condition.ConditionAndOr;
+import org.h2.expression.condition.ConditionAndOrN;
 import org.h2.mvstore.tx.TransactionMap;
 import org.h2.result.SearchRow;
 import org.h2.table.Column;
@@ -18,8 +19,9 @@ import java.util.*;
 
 public class IndexHandler {
     private static String hashBitIndexName  = "hashBitIndex";
-    private static int[] countTempBitmapArray= new int[]{0, 0, 1, 1, 1};
-    private static int[] outerAndOrTempBitmapArray= new int[]{0, 0, 1, 1, 1};
+//    private static int[] countTempBitmapArray= new int[]{0, 0, 1, 1, 1};
+    private static int[] countTempBitmapArray= new int[]{1, 1, 0, 0, 0};
+    private static int[] outerAndOrTempBitmapArray= new int[]{1, 1, 1, 0, 0};
     private static String OR = "OR";
     private static String AND = "AND";
 
@@ -84,19 +86,38 @@ public class IndexHandler {
     }
 
     //TODO: When there is another funcs with AND/OR, there can be errors so handle these (Expression == 1) things or Do count separtly and remove that expression
-    public static ArrayList<Integer> andOrOperationIndexes(ArrayList<Expression> expressions) {
-        ArrayList<Integer> resultBitmap = new ArrayList<>(), left = null, right = null, results = null;
+    public static ArrayList<Integer> andOrOperationIndexes(Expression expression) {
+        ArrayList<Integer> resultBitmap = new ArrayList<>(), left = null, right = null, results = null, values = null,
+                tempresults = null;
         ConditionAndOr conditionAndOr;
-        for (Expression expression : expressions) {
-            if (expression instanceof ConditionAndOr) {
-                conditionAndOr = (ConditionAndOr) expression;
-                left = comparisonOperationIndexes(conditionAndOr.getLeft());
-                right = comparisonOperationIndexes(conditionAndOr.getRight());
-                if (left != null && right != null) {
-                    results = andOrBitMap(left, right, conditionAndOr.getAndOrType());
+        ConditionAndOrN conditionAndOrn;
+        Expression ex;
+        if (expression instanceof Comparison) {
+            results = comparisonOperationIndexes(expression);
+        } else if (expression instanceof ConditionAndOr) {
+            conditionAndOr = (ConditionAndOr) expression;
+            left = comparisonOperationIndexes(conditionAndOr.getLeft());
+            right = comparisonOperationIndexes(conditionAndOr.getRight());
+            if (left != null && right != null) {
+                results = andOrBitMap(left, right, conditionAndOr.getAndOrType());
+            }
+        } else if (expression instanceof ConditionAndOrN) {
+            conditionAndOrn = (ConditionAndOrN) expression;
+            for (int i = 0; i < conditionAndOrn.getSubexpressionCount(); i++) {
+                ex = conditionAndOrn.getSubexpression(i);
+                tempresults = andOrOperationIndexes(ex);
+                if (tempresults != null) {
+                    if (results == null) {
+                        results = tempresults;
+                    } else {
+                        results = andOrBitMap(results, tempresults, conditionAndOrn.getAndOrType());
+                    }
+                } else {
+                    return null;
                 }
             }
         }
+        return results;
     }
 
     public static ArrayList<Integer> andOrBitMap(ArrayList<Integer> left, ArrayList<Integer> right, int type) {
@@ -104,7 +125,7 @@ public class IndexHandler {
         for(int i = 0; i < left.size(); i++) {
             if (type == ConditionAndOr.OR) {
                 results.add(Math.min(1, left.get(i) + right.get(i)));
-            } else (type == ConditionAndOr.AND) {
+            } else if (type == ConditionAndOr.AND) {
                 results.add(left.get(i) * right.get(i));
             }
         }

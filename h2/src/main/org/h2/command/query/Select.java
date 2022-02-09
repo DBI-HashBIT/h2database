@@ -515,6 +515,7 @@ public class Select extends Query {
     private void gatherGroup(int columnCount, int stage) {
         long rowNumber = 0;
         setCurrentRowNumber(0);
+        //TODO Do we need to reverse the bitmap
         HashMap<Integer, ArrayList<Integer>> countBitmapIndexes = IndexHandler
                 .getValueForCountOperationWithHashBitIndexes(IndexHandler.getCountOperationIndexes(expressions), expressions);
         ArrayList<Integer> bitmap = IndexHandler.combineBitmapsForCountOperations(countBitmapIndexes);
@@ -734,7 +735,13 @@ public class Select extends Query {
             limitRows = Long.MAX_VALUE;
         }
         Value[] row = null;
+        ArrayList<Integer> andOrBitMap = IndexHandler.andOrOperationIndexes(condition);
+        int i = -1;
         while (result.getRowCount() < limitRows && lazyResult.next()) {
+            i++;
+            if (andOrBitMap !=null && andOrBitMap.get(i).longValue() == 0) {
+                continue;
+            }
             row = lazyResult.currentRow();
             result.addRow(row);
         }
