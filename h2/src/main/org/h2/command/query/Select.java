@@ -515,24 +515,29 @@ public class Select extends Query {
     private void gatherGroup(int columnCount, int stage) {
         long rowNumber = 0;
         setCurrentRowNumber(0);
-        //TODO Do we need to reverse the bitmap
-        HashMap<Integer, ArrayList<Integer>> countBitmapIndexes = IndexHandler
-                .getValueForCountOperationWithHashBitIndexes(IndexHandler.getCountOperationIndexes(expressions), expressions);
-        ArrayList<Integer> bitmap = IndexHandler.combineBitmapsForCountOperations(countBitmapIndexes);
         int i = -1;
         while (topTableFilter.next()) {
             i++;
-            if (bitmap !=null && bitmap.size() > 0 && bitmap.get(i).longValue() == 0) {
-                continue;
-            }
             setCurrentRowNumber(rowNumber + 1);
             if (isForUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                 rowNumber++;
                 groupData.nextSource();
-                updateAgg(columnCount, stage);
+                updateAgg(columnCount, stage, i, getCountExpressionIndexes());
             }
         }
         groupData.done();
+    }
+
+    public ArrayList<Integer> getCountbitmap(ArrayList<Integer> countIndexes) {
+        //TODO Do we need to reverse the bitmap
+        HashMap<Integer, ArrayList<Integer>> countBitmapIndexes = IndexHandler
+                .getValueForCountOperationWithHashBitIndexes(countIndexes, expressions);
+        ArrayList<Integer> bitmap = IndexHandler.combineBitmapsForCountOperations(countBitmapIndexes);
+        return bitmap;
+    }
+
+    public ArrayList<Integer> getCountExpressionIndexes() {
+        return IndexHandler.getCountOperationIndexes(expressions);
     }
 
 
@@ -542,10 +547,23 @@ public class Select extends Query {
      * @param stage see STAGE_RESET/STAGE_GROUP/STAGE_WINDOW in DataAnalysisOperation
      */
     void updateAgg(int columnCount, int stage) {
+        updateAgg(columnCount, stage, -1, null);
+    }
+
+    void updateAgg(int columnCount, int stage, int rowIndex, ArrayList<Integer> countIndexes) {
+        ArrayList<Integer> countBitmap = null;
+        if (rowIndex > 0 && countIndexes != null) {
+            countBitmap = getCountbitmap(countIndexes);
+        }
         for (int i = 0; i < columnCount; i++) {
             if ((groupByExpression == null || !groupByExpression[i])
                     && (groupByCopies == null || groupByCopies[i] < 0)) {
                 Expression expr = expressions.get(i);
+                if (countIndexes != null && countIndexes.contains(i)) {
+                    if (countBitmap !=null && countBitmap.size() > 0 && countBitmap.get(i).longValue() == 0) {
+                        continue;
+                    }
+                }
                 expr.updateAggregate(session, stage);
             }
         }
