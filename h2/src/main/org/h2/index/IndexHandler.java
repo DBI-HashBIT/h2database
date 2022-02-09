@@ -96,8 +96,8 @@ public class IndexHandler {
             results = comparisonOperationIndexes(expression);
         } else if (expression instanceof ConditionAndOr) {
             conditionAndOr = (ConditionAndOr) expression;
-            left = comparisonOperationIndexes(conditionAndOr.getLeft());
-            right = comparisonOperationIndexes(conditionAndOr.getRight());
+            left = andOrOperationIndexes(conditionAndOr.getLeft());
+            right = andOrOperationIndexes(conditionAndOr.getRight());
             if (left != null && right != null) {
                 results = andOrBitMap(left, right, conditionAndOr.getAndOrType());
             }
@@ -128,6 +128,9 @@ public class IndexHandler {
             } else if (type == ConditionAndOr.AND) {
                 results.add(left.get(i) * right.get(i));
             }
+        }
+        if (type == ConditionAndOr.OR) {
+        } else if (type == ConditionAndOr.AND) {
         }
         return results;
     }

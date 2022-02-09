@@ -522,7 +522,7 @@ public class Select extends Query {
         int i = -1;
         while (topTableFilter.next()) {
             i++;
-            if(bitmap !=null && bitmap.get(i).longValue() == 0) {
+            if (bitmap !=null && bitmap.size() > 0 && bitmap.get(i).longValue() == 0) {
                 continue;
             }
             setCurrentRowNumber(rowNumber + 1);
