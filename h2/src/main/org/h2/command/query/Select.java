@@ -517,7 +517,7 @@ public class Select extends Query {
         setCurrentRowNumber(0);
         HashMap<Integer, ArrayList<Integer>> countBitmapIndexes = IndexHandler
                 .getValueForCountOperationWithHashBitIndexes(IndexHandler.getCountOperationIndexes(expressions), expressions);
-        ArrayList<Integer> bitmap = IndexHandler.combineBitmaps(countBitmapIndexes);
+        ArrayList<Integer> bitmap = IndexHandler.combineBitmapsForCountOperations(countBitmapIndexes);
         int i = -1;
         while (topTableFilter.next()) {
             i++;

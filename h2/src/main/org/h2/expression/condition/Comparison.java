@@ -115,6 +115,18 @@ public final class Comparison extends Condition {
         this.whenOperand = whenOperand;
     }
 
+    public int getCompareType() {
+        return compareType;
+    }
+
+    public Expression getLeft() {
+        return left;
+    }
+
+    public Expression getRight() {
+        return right;
+    }
+
     @Override
     public boolean needParentheses() {
         return true;

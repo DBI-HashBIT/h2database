@@ -1,8 +1,12 @@
 package org.h2.index;
 
 import org.h2.expression.Expression;
+import org.h2.expression.ExpressionColumn;
+import org.h2.expression.ValueExpression;
 import org.h2.expression.aggregate.Aggregate;
 import org.h2.expression.aggregate.AggregateType;
+import org.h2.expression.condition.Comparison;
+import org.h2.expression.condition.ConditionAndOr;
 import org.h2.mvstore.tx.TransactionMap;
 import org.h2.result.SearchRow;
 import org.h2.table.Column;
@@ -15,6 +19,10 @@ import java.util.*;
 public class IndexHandler {
     private static String hashBitIndexName  = "hashBitIndex";
     private static int[] countTempBitmapArray= new int[]{0, 0, 1, 1, 1};
+    private static int[] outerAndOrTempBitmapArray= new int[]{0, 0, 1, 1, 1};
+    private static String OR = "OR";
+    private static String AND = "AND";
+
     public static ArrayList<Integer> getCountOperationIndexes(ArrayList<Expression> expressions) {
         int i = 0;
         Column column;
@@ -40,6 +48,67 @@ public class IndexHandler {
             i++;
         }
         return countExpressions;
+    }
+
+    //TODO: When there is another funcs with count, there can be errors so handle these (Expression == 1) things or Do count separtly and remove that expression
+    public static ArrayList<Integer> comparisonOperationIndexes(Expression expression) {
+        int i = 0;
+        Column column;
+        String columnName;
+        Table table;
+        Index columnIndex;
+        Comparison comparison;
+        ArrayList<Integer> andOrExpressions = new ArrayList<>();
+        if (expression instanceof Comparison) {
+            comparison = (Comparison) expression;
+            //TODO Implement this for nested values
+            if (comparison.getLeft() instanceof ExpressionColumn) {
+                column = ((ExpressionColumn)(comparison.getLeft())).getColumn();
+                columnName = column.getName();
+                table = column.getTable();
+                columnIndex = table.getIndexForColumn(column, false, false);
+                if (comparison.getRight() instanceof ValueExpression &&
+                        (comparison.getCompareType() ==  Comparison.EQUAL) &&
+                        (true || columnIndex.indexType.equals(hashBitIndexName) &&
+                                columnIndex.indexColumns.length == 1)) {
+                    //Get Bitmap Indices
+                    ArrayList<Integer> integerArray = new ArrayList<Integer>(outerAndOrTempBitmapArray.length);
+                    for (int j : outerAndOrTempBitmapArray) {
+                        integerArray.add(j);
+                    }
+                    return integerArray;
+                }
+            }
+        }
+        return null;
+    }
+
+    //TODO: When there is another funcs with AND/OR, there can be errors so handle these (Expression == 1) things or Do count separtly and remove that expression
+    public static ArrayList<Integer> andOrOperationIndexes(ArrayList<Expression> expressions) {
+        ArrayList<Integer> resultBitmap = new ArrayList<>(), left = null, right = null, results = null;
+        ConditionAndOr conditionAndOr;
+        for (Expression expression : expressions) {
+            if (expression instanceof ConditionAndOr) {
+                conditionAndOr = (ConditionAndOr) expression;
+                left = comparisonOperationIndexes(conditionAndOr.getLeft());
+                right = comparisonOperationIndexes(conditionAndOr.getRight());
+                if (left != null && right != null) {
+                    results = andOrBitMap(left, right, conditionAndOr.getAndOrType());
+                }
+            }
+        }
+    }
+
+    public static ArrayList<Integer> andOrBitMap(ArrayList<Integer> left, ArrayList<Integer> right, int type) {
+        ArrayList<Integer> results = new ArrayList<>();
+        for(int i = 0; i < left.size(); i++) {
+            if (type == ConditionAndOr.OR) {
+                results.add(Math.min(1, left.get(i) + right.get(i)));
+            } else (type == ConditionAndOr.AND) {
+                results.add(left.get(i) * right.get(i));
+            }
+        }
+        return results;
     }
 
     public static HashMap<Integer, ArrayList<Integer>> getValueForCountOperationWithHashBitIndexes(
@@ -70,7 +139,7 @@ public class IndexHandler {
     }
 
     //TODO: Check this
-    public static ArrayList<Integer> combineBitmaps(HashMap<Integer, ArrayList<Integer>> bitmaps) {
+    public static ArrayList<Integer> combineBitmapsForCountOperations(HashMap<Integer, ArrayList<Integer>> bitmaps) {
         ArrayList<Integer> combinebitmap = null;
         ArrayList<Integer> tempmap = null;
         ArrayList<Integer> values;
