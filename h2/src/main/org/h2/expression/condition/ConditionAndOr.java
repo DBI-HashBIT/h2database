@@ -49,7 +49,15 @@ public class ConditionAndOr extends Condition {
         this.right = right;
     }
 
-    int getAndOrType() {
+    public Expression getLeft() {
+        return left;
+    }
+
+    public Expression getRight() {
+        return right;
+    }
+
+    public int getAndOrType() {
         return this.andOrType;
     }
 
