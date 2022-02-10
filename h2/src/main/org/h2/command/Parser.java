@@ -2809,6 +2809,12 @@ public class Parser {
                     // make flat so the optimizer can work better
                     Expression on = join.getJoinCondition();
                     if (on != null) {
+                        Comparison comparison = (Comparison) on;
+                        ExpressionColumn expressionColumn = ((ExpressionColumn) comparison.getLeft());
+                        System.out.println(expressionColumn.getColumn().getName());
+                        comparison = (Comparison) on;
+                        expressionColumn = ((ExpressionColumn) comparison.getRight());
+                        System.out.println(expressionColumn.getColumn().getName());
                         command.addCondition(on);
                     }
                     join.removeJoinCondition();

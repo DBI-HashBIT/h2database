@@ -19,9 +19,9 @@ import java.util.*;
 
 public class IndexHandler {
     private static String hashBitIndexName  = "hashBitIndex";
-//    private static int[] countTempBitmapArray= new int[]{0, 0, 1, 1, 1};
-    private static int[] countTempBitmapArray= new int[]{1, 1, 1, 1, 1};
-    private static int[] outerAndOrTempBitmapArray= new int[]{1, 1, 1, 0, 0};
+    private static int[] countTempBitmapArray = new int[]{1, 1, 1, 1, 0, 0, 0, 1};
+//    private static int[] countTempBitmapArray = new int[]{1, 1, 1, 1, 0, 0, 0, 1};
+    private static int[] outerAndOrTempBitmapArray = new int[]{1, 1, 1, 1, 0, 0, 0, 1};
     private static String OR = "OR";
     private static String AND = "AND";
 
@@ -130,7 +130,9 @@ public class IndexHandler {
             }
         }
         if (type == ConditionAndOr.OR) {
+            System.out.println(left + " OR " + right + "   =====>  " + results);
         } else if (type == ConditionAndOr.AND) {
+            System.out.println(left + " AND " + right + "   =====>  " + results);
         }
         return results;
     }

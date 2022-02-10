@@ -740,6 +740,7 @@ public class Select extends Query {
         LazyResultQueryFlat lazyResult = new LazyResultQueryFlat(expressionArray, columnCount, isForUpdate);
         skipOffset(lazyResult, offset, quickOffset);
         if (result == null) {
+            System.out.println("Return null due to result == null");
             return lazyResult;
         }
         if (limitRows < 0 || sort != null && !sortUsingIndex || withTies && !quickOffset) {
@@ -749,6 +750,7 @@ public class Select extends Query {
         // ArrayList<Integer> andOrBitMap = IndexHandler.andOrOperationIndexes(condition);
         // int i = -1;
         while (result.getRowCount() < limitRows && lazyResult.next()) {
+            System.out.println("Check");
             // i++;
             // if (andOrBitMap !=null && andOrBitMap.get(i).longValue() == 0) {
             //     System.out.println("Avoid11");
@@ -855,7 +857,7 @@ public class Select extends Query {
             // Cannot apply limit now if percent is specified
             long limit = fetchPercent ? -1 : fetch;
             if (isQuickAggregateQuery) {
-                System.out.println("queryQuick Method is calling:- ");
+                System.out.println("queryQuick Method is calling:- ?");
                 queryQuick(columnCount, to, quickOffset && offset > 0);
             } else if (isWindowQuery) {
                 if (isGroupQuery) {
@@ -867,14 +869,14 @@ public class Select extends Query {
                 }
             } else if (isGroupQuery) {
                 if (isGroupSortedQuery) {
-                    System.out.println("queryGroupSorted Method is calling:- ");
+                    System.out.println("queryGroupSorted Method is calling:- ?");
                     lazyResult = queryGroupSorted(columnCount, to, offset, quickOffset);
                 } else {
                     System.out.println("queryGroup Method is calling:- ");
                     queryGroup(columnCount, result, offset, quickOffset);
                 }
             } else if (isDistinctQuery) {
-                System.out.println("queryDistinct Method is calling:- ");
+                System.out.println("queryDistinct Method is calling:- ?");
                 queryDistinct(to, offset, limit, withTies, quickOffset);
             } else {
                 System.out.println("queryFlat Method is calling:- ");
@@ -1866,7 +1868,9 @@ public class Select extends Query {
         protected Value[] fetchNextRow() {
             while (topTableFilter.next()) {
                 this.globalRowIndex += 1;
-                System.out.println("rowNumber " + rowNumber + " " + generateAndOrBitmap() + "(" + this.globalRowIndex + ")" +" => " + generateAndOrBitmap().get(this.globalRowIndex));
+                if (generateAndOrBitmap() != null && generateAndOrBitmap().size() > 0) {
+                    System.out.println("rowNumber " + rowNumber + " " + generateAndOrBitmap() + "(" + this.globalRowIndex + ")" + " => " + generateAndOrBitmap().get(this.globalRowIndex));
+                }
                 setCurrentRowNumber(rowNumber + 1);
                 if (!isConditionBitmapTrueForRow(generateAndOrBitmap(), this.globalRowIndex)) {
                    System.out.println("Avoid1");
