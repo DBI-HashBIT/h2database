@@ -129,11 +129,6 @@ public class IndexHandler {
                 results.add(left.get(i) * right.get(i));
             }
         }
-        if (type == ConditionAndOr.OR) {
-            System.out.println(left + " OR " + right + "   =====>  " + results);
-        } else if (type == ConditionAndOr.AND) {
-            System.out.println(left + " AND " + right + "   =====>  " + results);
-        }
         return results;
     }
 

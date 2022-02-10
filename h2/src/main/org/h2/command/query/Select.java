@@ -528,10 +528,8 @@ public class Select extends Query {
         while (topTableFilter.next()) {
             globalRowNumber++;
             if (!isConditionBitmapTrueForRow(generateAndOrBitmap(), globalRowNumber)) {
-                System.out.println("Avoid Gather Group");
                 continue;
             }
-            System.out.println("Itearate Gather Group");
             setCurrentRowNumber(rowNumber + 1);
             if (isForUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                 rowNumber++;
@@ -740,23 +738,13 @@ public class Select extends Query {
         LazyResultQueryFlat lazyResult = new LazyResultQueryFlat(expressionArray, columnCount, isForUpdate);
         skipOffset(lazyResult, offset, quickOffset);
         if (result == null) {
-            System.out.println("Return null due to result == null");
             return lazyResult;
         }
         if (limitRows < 0 || sort != null && !sortUsingIndex || withTies && !quickOffset) {
             limitRows = Long.MAX_VALUE;
         }
         Value[] row = null;
-        // ArrayList<Integer> andOrBitMap = IndexHandler.andOrOperationIndexes(condition);
-        // int i = -1;
         while (result.getRowCount() < limitRows && lazyResult.next()) {
-            System.out.println("Check");
-            // i++;
-            // if (andOrBitMap !=null && andOrBitMap.get(i).longValue() == 0) {
-            //     System.out.println("Avoid11");
-            //     continue;
-            // }
-            // System.out.println("Iterate11");
             row = lazyResult.currentRow();
             result.addRow(row);
         }
@@ -780,7 +768,6 @@ public class Select extends Query {
 
     private Boolean isConditionBitmapTrueForRow(ArrayList<Integer> bitmap, int rowNumber) {
         if (bitmap !=null && bitmap.size() > 0 && bitmap.get(rowNumber).longValue() == 0) {
-            System.out.println("Avoid for " + rowNumber);
             return false;
         }
         return true;
@@ -857,29 +844,22 @@ public class Select extends Query {
             // Cannot apply limit now if percent is specified
             long limit = fetchPercent ? -1 : fetch;
             if (isQuickAggregateQuery) {
-                System.out.println("queryQuick Method is calling:- ?");
                 queryQuick(columnCount, to, quickOffset && offset > 0);
             } else if (isWindowQuery) {
                 if (isGroupQuery) {
-                    System.out.println("queryGroupWindow Method is calling:- ");
                     queryGroupWindow(columnCount, result, offset, quickOffset);
                 } else {
-                    System.out.println("queryWindow Method is calling:- ");
                     queryWindow(columnCount, result, offset, quickOffset);
                 }
             } else if (isGroupQuery) {
                 if (isGroupSortedQuery) {
-                    System.out.println("queryGroupSorted Method is calling:- ?");
                     lazyResult = queryGroupSorted(columnCount, to, offset, quickOffset);
                 } else {
-                    System.out.println("queryGroup Method is calling:- ");
                     queryGroup(columnCount, result, offset, quickOffset);
                 }
             } else if (isDistinctQuery) {
-                System.out.println("queryDistinct Method is calling:- ?");
                 queryDistinct(to, offset, limit, withTies, quickOffset);
             } else {
-                System.out.println("queryFlat Method is calling:- ");
                 lazyResult = queryFlat(columnCount, to, offset, limit, withTies, quickOffset);
             }
             if (quickOffset) {
@@ -1869,14 +1849,11 @@ public class Select extends Query {
             while (topTableFilter.next()) {
                 this.globalRowIndex += 1;
                 if (generateAndOrBitmap() != null && generateAndOrBitmap().size() > 0) {
-                    System.out.println("rowNumber " + rowNumber + " " + generateAndOrBitmap() + "(" + this.globalRowIndex + ")" + " => " + generateAndOrBitmap().get(this.globalRowIndex));
                 }
                 setCurrentRowNumber(rowNumber + 1);
                 if (!isConditionBitmapTrueForRow(generateAndOrBitmap(), this.globalRowIndex)) {
-                   System.out.println("Avoid1");
                     continue;
                 }
-               System.out.println("Itearet1");
                 // This method may lock rows
                 if (forUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                     ++rowNumber;
