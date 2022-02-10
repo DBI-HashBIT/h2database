@@ -19,9 +19,9 @@ import java.util.*;
 
 public class IndexHandler {
     private static String hashBitIndexName  = "hashBitIndex";
-//    private static int[] countTempBitmapArray= new int[]{0, 0, 1, 1, 1};
-    private static int[] countTempBitmapArray= new int[]{1, 1, 0, 0, 0};
-    private static int[] outerAndOrTempBitmapArray= new int[]{1, 1, 1, 0, 0};
+    private static int[] countTempBitmapArray = new int[]{1, 1, 1, 1, 0, 0, 0, 1};
+//    private static int[] countTempBitmapArray = new int[]{1, 1, 1, 1, 0, 0, 0, 1};
+    private static int[] outerAndOrTempBitmapArray = new int[]{1, 1, 1, 1, 0, 0, 0, 1};
     private static String OR = "OR";
     private static String AND = "AND";
 
@@ -96,8 +96,8 @@ public class IndexHandler {
             results = comparisonOperationIndexes(expression);
         } else if (expression instanceof ConditionAndOr) {
             conditionAndOr = (ConditionAndOr) expression;
-            left = comparisonOperationIndexes(conditionAndOr.getLeft());
-            right = comparisonOperationIndexes(conditionAndOr.getRight());
+            left = andOrOperationIndexes(conditionAndOr.getLeft());
+            right = andOrOperationIndexes(conditionAndOr.getRight());
             if (left != null && right != null) {
                 results = andOrBitMap(left, right, conditionAndOr.getAndOrType());
             }

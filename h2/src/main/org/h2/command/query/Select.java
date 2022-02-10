@@ -157,6 +157,8 @@ public class Select extends Query {
 
     private HashMap<String, Window> windows;
 
+    private ArrayList<Integer> andOrBitmap;
+
     public Select(SessionLocal session, Select parentSelect) {
         super(session);
         this.parentSelect = parentSelect;
@@ -339,6 +341,13 @@ public class Select extends Query {
         return rowForResult(row, columnCount);
     }
 
+    public ArrayList<Integer> getAndOrBitmap() {
+        if (this.andOrBitmap == null) {
+            this.andOrBitmap = generateAndOrBitmap();
+        }
+        return this.andOrBitmap;
+    }
+
     /**
      * Removes HAVING and QUALIFY columns from the row.
      *
@@ -515,14 +524,10 @@ public class Select extends Query {
     private void gatherGroup(int columnCount, int stage) {
         long rowNumber = 0;
         setCurrentRowNumber(0);
-        //TODO Do we need to reverse the bitmap
-        HashMap<Integer, ArrayList<Integer>> countBitmapIndexes = IndexHandler
-                .getValueForCountOperationWithHashBitIndexes(IndexHandler.getCountOperationIndexes(expressions), expressions);
-        ArrayList<Integer> bitmap = IndexHandler.combineBitmapsForCountOperations(countBitmapIndexes);
-        int i = -1;
+        int globalRowNumber = -1;
         while (topTableFilter.next()) {
-            i++;
-            if(bitmap !=null && bitmap.get(i).longValue() == 0) {
+            globalRowNumber++;
+            if (!isConditionBitmapTrueForRow(generateAndOrBitmap(), globalRowNumber)) {
                 continue;
             }
             setCurrentRowNumber(rowNumber + 1);
@@ -533,6 +538,10 @@ public class Select extends Query {
             }
         }
         groupData.done();
+    }
+
+    public ArrayList<Integer> getCountExpressionIndexes() {
+        return IndexHandler.getCountOperationIndexes(expressions);
     }
 
 
@@ -735,13 +744,7 @@ public class Select extends Query {
             limitRows = Long.MAX_VALUE;
         }
         Value[] row = null;
-        ArrayList<Integer> andOrBitMap = IndexHandler.andOrOperationIndexes(condition);
-        int i = -1;
         while (result.getRowCount() < limitRows && lazyResult.next()) {
-            i++;
-            if (andOrBitMap !=null && andOrBitMap.get(i).longValue() == 0) {
-                continue;
-            }
             row = lazyResult.currentRow();
             result.addRow(row);
         }
@@ -757,6 +760,17 @@ public class Select extends Query {
             result.limitsWereApplied();
         }
         return null;
+    }
+
+    private ArrayList<Integer> generateAndOrBitmap() {
+        return IndexHandler.andOrOperationIndexes(condition);
+    }
+
+    private Boolean isConditionBitmapTrueForRow(ArrayList<Integer> bitmap, int rowNumber) {
+        if (bitmap !=null && bitmap.size() > 0 && bitmap.get(rowNumber).longValue() == 0) {
+            return false;
+        }
+        return true;
     }
 
     private static void skipOffset(LazyResultSelect lazyResult, long offset, boolean quickOffset) {
@@ -1822,16 +1836,24 @@ public class Select extends Query {
     private final class LazyResultQueryFlat extends LazyResultSelect {
 
         private boolean forUpdate;
+        int globalRowIndex;
 
         LazyResultQueryFlat(Expression[] expressions, int columnCount, boolean forUpdate) {
             super(expressions, columnCount);
             this.forUpdate = forUpdate;
+            this.globalRowIndex = -1;
         }
 
         @Override
         protected Value[] fetchNextRow() {
             while (topTableFilter.next()) {
+                this.globalRowIndex += 1;
+                if (generateAndOrBitmap() != null && generateAndOrBitmap().size() > 0) {
+                }
                 setCurrentRowNumber(rowNumber + 1);
+                if (!isConditionBitmapTrueForRow(generateAndOrBitmap(), this.globalRowIndex)) {
+                    continue;
+                }
                 // This method may lock rows
                 if (forUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                     ++rowNumber;
