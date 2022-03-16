@@ -140,6 +140,8 @@ public final class Insert extends CommandWithValues implements ResultTarget {
     }
 
     private long insertRows() {
+        System.out.println("in insert row");
+
         session.getUser().checkTableRight(table, Right.INSERT);
         setCurrentRowNumber(0);
         table.fire(session, Trigger.INSERT, true);
@@ -153,10 +155,13 @@ public final class Insert extends CommandWithValues implements ResultTarget {
                 setCurrentRowNumber(x + 1);
                 for (int i = 0; i < columnLen; i++) {
                     Column c = columns[i];
+                    //System.out.println(c);
                     int index = c.getColumnId();
                     Expression e = expr[i];
                     if (e != ValueExpression.DEFAULT) {
                         try {
+                            System.out.println(index+"index in insert");
+                            System.out.println((e.getValue(session)).toString()+"get value in insert");
                             newRow.setValue(index, e.getValue(session));
                         } catch (DbException ex) {
                             throw setRow(ex, x, getSimpleSQL(expr));

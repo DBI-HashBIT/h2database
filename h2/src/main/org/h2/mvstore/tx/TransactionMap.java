@@ -1091,6 +1091,10 @@ public final class TransactionMap<K, V> extends AbstractMap<K,V> {
 
         @SuppressWarnings("unchecked")
         final X toElement(K key, Object value) {
+            System.out.print("inside tmiterator key");
+            System.out.println(key);
+            System.out.print("inside tmiterator value");
+            System.out.println(value);
             return (X) (forEntries ? new AbstractMap.SimpleImmutableEntry<>(key, value) : key);
         }
 

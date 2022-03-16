@@ -85,6 +85,10 @@ public class MVPrimaryIndex extends MVIndex<Long, SearchRow> {
 
     @Override
     public void add(SessionLocal session, Row row) {
+        System.out.println("row in add mvprimaryindex"+row);
+        System.out.println("session in add mvprimaryindex"+session);
+        
+        System.out.println("row get value in add mvprimaryindex"+row.getValue(mainIndexColumn));
         if (mainIndexColumn == SearchRow.ROWID_INDEX) {
             if (row.getKey() == 0) {
                 row.setKey(lastKey.incrementAndGet());
@@ -111,6 +115,7 @@ public class MVPrimaryIndex extends MVIndex<Long, SearchRow> {
         long rowKey = row.getKey();
         try {
             Row old = (Row)map.putIfAbsent(rowKey, row);
+            System.out.println(" in add mvprimaryindex inside try"+rowKey);
             if (old != null) {
                 int errorCode = ErrorCode.CONCURRENT_UPDATE_1;
                 if (map.getImmediate(rowKey) != null || map.getFromSnapshot(rowKey) != null) {

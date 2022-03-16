@@ -112,4 +112,117 @@ public class IndexHandler {
     public void setHashBitIndexName(String hashBitIndexName) {
         this.hashBitIndexName = hashBitIndexName;
     }
+
+ 
+    private int attributeExists(String attr) {
+        //change to Value - String is just to test
+        String[] bitmap_attrs=new String[]{"first","second","third","fourth","fifth"};
+        //iterate through existing rows
+        for (int i = 0; i < bitmap_attrs.length; i++) {
+            String v1 = bitmap_attrs[i];
+            String v2 = attr;
+            if (Objects.equals(v1, v2)) {
+                return i; //rerurn place or row of existing attribute
+            }
+        }
+        return -1;
+    }
+
+    public ArrayList<ArrayList<Integer>> insertRowBitMap(String attr) {
+        //get the feature of inserting row
+        //get the rows check for the feature, 
+        ArrayList<ArrayList<Integer>> bitmap_all = new ArrayList<ArrayList<Integer>>();
+        ArrayList<Integer> first = new ArrayList<>(Arrays.asList(1, 0, 0, 0, 0, 1, 0, 0));
+        ArrayList<Integer> second = new ArrayList<>(Arrays.asList(0, 1, 0, 0, 0, 0, 0, 1));
+        ArrayList<Integer> third = new ArrayList<>(Arrays.asList(0, 0, 1, 0, 0, 0, 1, 0));
+        ArrayList<Integer> fourth = new ArrayList<>(Arrays.asList(0, 0, 0, 1, 0, 0, 0, 0));
+        ArrayList<Integer> fifth = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 1, 0, 0, 0));
+        bitmap_all.add(first);
+        bitmap_all.add(second);
+        bitmap_all.add(third);
+        bitmap_all.add(fourth);
+        bitmap_all.add(fifth);
+        System.out.print("bitmap_all");
+        System.out.println(bitmap_all);
+        int place = attributeExists(attr);
+        System.out.print("does exist");
+        System.out.println(place);
+        for(int i = 0; i < bitmap_all.size(); i++) {
+            ArrayList<Integer> attr_list = bitmap_all.get(i);
+            if (i==place){
+                attr_list.add(1);
+            }
+            else{
+                attr_list.add(0);
+            }
+
+        }
+        if (place==-1){
+            System.out.println("new attribute");
+            //add new attribute 
+        }
+        return bitmap_all;
+    }
+    //search how to get all entries
+    
+
+    public ArrayList<ArrayList<Integer>> deleteRowBitMap(String attr, int rowPlace) {
+        //get the feature of inserting row
+        //get the rows check for the feature, 
+        ArrayList<ArrayList<Integer>> bitmap_all = new ArrayList<ArrayList<Integer>>();
+        ArrayList<ArrayList<Integer>> bitmap_all_new = new ArrayList<ArrayList<Integer>>();
+        ArrayList<Integer> first = new ArrayList<>(Arrays.asList(1, 0, 0, 0, 0, 1, 0, 0));
+        ArrayList<Integer> second = new ArrayList<>(Arrays.asList(0, 1, 0, 0, 0, 0, 0, 1));
+        ArrayList<Integer> third = new ArrayList<>(Arrays.asList(0, 0, 1, 0, 0, 0, 1, 0));
+        ArrayList<Integer> fourth = new ArrayList<>(Arrays.asList(0, 0, 0, 1, 0, 0, 0, 0));
+        ArrayList<Integer> fifth = new ArrayList<>(Arrays.asList(0, 0, 0, 0, 1, 0, 0, 0));
+        bitmap_all.add(first);
+        bitmap_all.add(second);
+        bitmap_all.add(third);
+        bitmap_all.add(fourth);
+        bitmap_all.add(fifth);
+        System.out.print("bitmap_all");
+        System.out.println(bitmap_all);
+
+        //get attribute place
+        int place = attributeExists(attr);
+        System.out.print("attr place");
+        System.out.println(place);
+        int numItems = 2;
+        for(int i = 0; i < bitmap_all.size(); i++) {
+            ArrayList<Integer> attr_bitmap_list = bitmap_all.get(i);
+            if (i == place){
+                //get the count of rows with attribute
+                //expected numItems to be one if the attribute exists only in the deleted row
+                numItems = Collections.frequency(attr_bitmap_list, 1);
+            }
+            attr_bitmap_list.remove(rowPlace);
+            //if numItems is greater than one add the attribute to the new list
+            //could be faster if we just remove attribute if numItems is 1
+            if (numItems > 1){
+                bitmap_all_new.add(attr_bitmap_list);
+            } 
+            
+        }
+
+        if (place==-1){
+            System.out.println("Error; attribute cannot be found");
+        }
+
+        
+        return bitmap_all_new;
+    }
+
+    public ArrayList<ArrayList<Integer>> updateRowBitMap(String new_attr, int rowPlace, String old_attr) {
+        
+        ArrayList<ArrayList<Integer>> bitmap_all_new = new ArrayList<ArrayList<Integer>>();
+
+        
+        bitmap_all_new = deleteRowBitMap(old_attr, rowPlace); //pass the array -- only a dummy array is used in delete function
+        insertRowBitMap(new_attr); //pass the array -- only a dummy array is used in insert function
+
+        return bitmap_all_new;
+    }
+    
+
 }

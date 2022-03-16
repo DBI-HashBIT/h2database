@@ -23,6 +23,7 @@ import org.h2.engine.SessionLocal;
 import org.h2.engine.SysProperties;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
+import org.h2.index.IndexHandler;
 import org.h2.index.IndexType;
 import org.h2.message.DbException;
 import org.h2.message.Trace;
@@ -134,6 +135,8 @@ public class MVTable extends TableBase {
 
     private final Store store;
     private final TransactionStore transactionStore;
+
+    private final IndexHandler indexhandler = new IndexHandler();
 
     public MVTable(CreateTableData data, Store store) {
         super(data);
@@ -514,8 +517,14 @@ public class MVTable extends TableBase {
         syncLastModificationIdWithDatabase();
         Transaction t = session.getTransaction();
         long savepoint = t.setSavepoint();
+        ArrayList<ArrayList<Integer>> bitmaparrinsert = indexhandler.insertRowBitMap("second");
+        System.out.println("calling index handler insert inside add row-mvtble"+bitmaparrinsert);
+        ArrayList<ArrayList<Integer>> bitmaparrdelete = indexhandler.deleteRowBitMap("second", 7);
+        System.out.println("calling index handler delete inside add row-mvtble"+bitmaparrdelete);
         try {
+            System.out.println("indexes inside add row-mvtble"+indexes);
             for (Index index : indexes) {
+                System.out.println("row in add row-mvtble"+row);
                 index.add(session, row);
             }
         } catch (Throwable e) {
@@ -911,6 +920,7 @@ public class MVTable extends TableBase {
      * @return the prepared columns with flags set
      */
     private static IndexColumn[] prepareColumns(Database database, IndexColumn[] cols, IndexType indexType) {
+        //System.out.println(indexType);
         if (indexType.isPrimaryKey()) {
             for (IndexColumn c : cols) {
                 Column column = c.column;
