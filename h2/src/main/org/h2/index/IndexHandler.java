@@ -21,7 +21,7 @@ public class IndexHandler {
     private static String hashBitIndexName  = "hashBitIndex";
     private static int[] outerAndOrTempBitmapArray = new int[]{1, 1, 1, 1, 0, 0, 0, 1};
 
-    private static ArrayList<Integer> getBitMapIndices(Column column, Table table) {
+    private static ArrayList<Integer> getBitMapIndices(Column column, Table table, String value) {
         ArrayList<Integer> integerArray = new ArrayList<>(outerAndOrTempBitmapArray.length);
         for (int j : outerAndOrTempBitmapArray) {
             integerArray.add(j);
@@ -51,7 +51,7 @@ public class IndexHandler {
                         (true || columnIndex.indexType.equals(hashBitIndexName) &&
                                 columnIndex.indexColumns.length == 1)) {
                     //Get Bitmap Indices
-                    return getBitMapIndices(column, table);
+                    return getBitMapIndices(column, table, "");
                 }
             }
         }
