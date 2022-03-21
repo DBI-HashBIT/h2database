@@ -1,5 +1,7 @@
 package org.h2.index.hasbithelper;
 
+import org.h2.table.Column;
+
 import java.io.*;
 
 public class FileHelper {
@@ -8,6 +10,7 @@ public class FileHelper {
 
     public static void WriteObjectToFile(String filepath, HashBitObject serObj) {
         try {
+            filepath = directoryName + separator + filepath;
             FileOutputStream fileOut = new FileOutputStream(filepath);
             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
             objectOut.writeObject(serObj);
@@ -19,6 +22,7 @@ public class FileHelper {
 
     public static HashBitObject ReadObjectFromFile(String filepath) {
         try {
+            filepath = directoryName + separator + filepath;
             FileInputStream fileIn = new FileInputStream(filepath);
             ObjectInputStream objectIn = new ObjectInputStream(fileIn);
             Object obj = objectIn.readObject();
@@ -30,15 +34,29 @@ public class FileHelper {
         }
     }
 
-    public static void addNewHashObject(String tableName, String columnName) {
+    private static String generateColumnNames(Column[] columns) {
+        String columnName = "";
+        for (Column column: columns) {
+            columnName += column.getName()+ ",";
+        }
+        columnName.substring(0, columnName.length() - 1);
+        return columnName;
+    }
+
+    public static void addNewHashObject(String tableName, Column[] columns) {
         String directoryName = FileHelper.directoryName;
-        String fileName = tableName + "_" + columnName + ".txt";
+        String fileName = generateFileName(tableName, columns);
 
         File directory = new File(directoryName);
         if (! directory.exists()){
             directory.mkdir();
         }
         File file = new File(directoryName + separator + fileName);
-        WriteObjectToFile(file.getAbsolutePath(), new HashBitObject());
+        WriteObjectToFile(fileName, new HashBitObject());
+    }
+
+    public static String generateFileName(String tableName, Column[] columns) {
+        String columnName = generateColumnNames(columns);
+        return tableName + "_" + columnName + ".txt";
     }
 }

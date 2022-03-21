@@ -1,17 +1,18 @@
 package org.h2.mvstore.db;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
+
+import org.h2.api.DatabaseEventListener;
 import org.h2.api.ErrorCode;
 import org.h2.command.query.AllColumnsForPlan;
 import org.h2.engine.Database;
 import org.h2.engine.SessionLocal;
 import org.h2.index.Cursor;
+import org.h2.index.Index;
 import org.h2.index.IndexType;
 import org.h2.index.SingleRowCursor;
+import org.h2.index.hasbithelper.FileHelper;
+import org.h2.index.hasbithelper.HashBitObject;
 import org.h2.message.DbException;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
@@ -24,8 +25,10 @@ import org.h2.result.Row;
 import org.h2.result.RowFactory;
 import org.h2.result.SearchRow;
 import org.h2.result.SortOrder;
+import org.h2.table.Column;
 import org.h2.table.IndexColumn;
 import org.h2.table.TableFilter;
+import org.h2.util.Utils;
 import org.h2.value.Value;
 import org.h2.value.ValueNull;
 import org.h2.value.VersionedValue;
@@ -36,10 +39,11 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
      * The multi-value table.
      */
     private final MVTable mvTable;
-    private final TransactionMap<SearchRow,Value> dataMap;
+    private final TransactionMap<SearchRow, Value> dataMap;
 
     public HashBitIndex(Database db, MVTable table, int id, String indexName,
-                            IndexColumn[] columns, int uniqueColumnCount, IndexType indexType) {
+                        IndexColumn[] columns, int uniqueColumnCount, IndexType indexType) {
+        //TODO: Pass a error if there is more than one column
         super(table, id, indexName, columns, uniqueColumnCount, indexType);
         this.mvTable = table;
         if (!database.isStarting()) {
@@ -59,11 +63,12 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
                     "Incompatible key type, expected " + keyType + " but got "
                             + dataMap.getKeyType() + " for index " + indexName);
         }
+        FileHelper.addNewHashObject(table.getName(), this.columns);
     }
 
     @Override
     public void addRowsToBuffer(List<Row> rows, String bufferName) {
-        MVMap<SearchRow,Value> map = openMap(bufferName);
+        MVMap<SearchRow, Value> map = openMap(bufferName);
         for (Row row : rows) {
             SearchRow r = getRowFactory().createRow();
             r.copyFrom(row);
@@ -85,7 +90,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
         public boolean hasNext() {
             boolean result = iterator.hasNext();
-            if(result) {
+            if (result) {
                 currentRowData = iterator.next();
             }
             return result;
@@ -145,9 +150,9 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         }
     }
 
-    private MVMap<SearchRow,Value> openMap(String mapName) {
+    private MVMap<SearchRow, Value> openMap(String mapName) {
         RowDataType keyType = getRowFactory().getRowDataType();
-        MVMap.Builder<SearchRow,Value> builder = new MVMap.Builder<SearchRow,Value>()
+        MVMap.Builder<SearchRow, Value> builder = new MVMap.Builder<SearchRow, Value>()
                 .singleWriter()
                 .keyType(keyType)
                 .valueType(NullValueDataType.INSTANCE);
@@ -165,26 +170,33 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
     public void close(SessionLocal session) {
         // ok
     }
+//    @Override
+//    public void add(SessionLocal session, Row row) {
+    //        for (Column column : columns) {
+////            System.out.println(column.getTable().getName() + " " + column.getName() + " " + values[column.getColumnId()]);
+//        }
+
+    //        for (Column column : columns) {
+//            System.out.println(column.getTable().getName() + " " + column.getName() + " " + values[column.getColumnId()]);
+//        }
+//        for (Column column: this.columns) {
+//            System.out.println(column.getName());
+//        }
+//}
 
     @Override
     public void add(SessionLocal session, Row row) {
-        TransactionMap<SearchRow,Value> map = getTransactionMap(session);
-        SearchRow key = convertToKey(row, null);
-        boolean checkRequired = uniqueColumnColumn > 0 && !mayHaveNullDuplicates(row);
-        if (checkRequired) {
-            boolean repeatableRead = !session.getTransaction().allowNonRepeatableRead();
-            checkUnique(repeatableRead, map, row, Long.MIN_VALUE);
-        }
-
-        try {
-            map.put(key, ValueNull.INSTANCE);
-        } catch (MVStoreException e) {
-            throw mvTable.convertException(e);
-        }
-
-        if (checkRequired) {
-            checkUnique(false, map, row, row.getKey());
-        }
+        Value[] values = row.getValueList();
+        String path = FileHelper.generateFileName(table.getName(), this.columns);
+        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+        Column column = this.columns[0];
+        //TODO: This works only for column array with one column, Update that
+        System.out.println("====================================================================================================================");
+        System.out.println("Previous bitmap:- " + obj);
+        obj.add(values[column.getColumnId()].getString());
+        FileHelper.WriteObjectToFile(path, obj);
+        System.out.println("After add value:- " + values[column.getColumnId()].getString() + ":- " + FileHelper.ReadObjectFromFile(path));
+        System.out.println("====================================================================================================================");
     }
 
     private void checkUnique(boolean repeatableRead, TransactionMap<SearchRow,Value> map, SearchRow row,
@@ -434,11 +446,63 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         }
     }
 
-    public void rebuildIndex() {
-        System.out.println("This is rebuildIndex method calles=d inside HashbitIndex Class");
+    public void rebuildIndex(SessionLocal session) {
+        //TODO: Impplement this methos for all table. Currently, its implemented for MVTables
+
+        // Read entries in memory, sort them, write to a new map (in sorted
+        // order); repeat (using a new map for every block of 1 MB) until all
+        // record are read. Merge all maps to the target (using merge sort;
+        // duplicates are detected in the target). For randomly ordered data,
+        // this should use relatively few write operations.
+        // A possible optimization is: change the buffer size from "row count"
+        // to "amount of memory", and buffer index keys instead of rows.
+        Index scan = this.table.getScanIndex(session);
+        long remaining = scan.getRowCount(session);
+        long total = remaining;
+        Cursor cursor = scan.find(session, null, null);
+        long i = 0;
+        Store store = session.getDatabase().getStore();
+
+        int bufferSize = database.getMaxMemoryRows() / 2;
+        ArrayList<Row> buffer = new ArrayList<>(bufferSize);
+        String n = getName() + ':' + this.getName();
+        ArrayList<String> bufferNames = Utils.newSmallArrayList();
+        while (cursor.next()) {
+            Row row = cursor.get();
+            buffer.add(row);
+            database.setProgress(DatabaseEventListener.STATE_CREATE_INDEX, n, i++, total);
+            if (buffer.size() >= bufferSize) {
+                this.mvTable.sortRows(buffer, this);
+                String mapName = store.nextTemporaryMapName();
+                this.addRowsToBuffer(buffer, mapName);
+                bufferNames.add(mapName);
+                buffer.clear();
+            }
+            remaining--;
+        }
+        this.mvTable.sortRows(buffer, this);
+        if (!bufferNames.isEmpty()) {
+            //TODO: Need to handle this by preventing updating the datamap
+            String mapName = store.nextTemporaryMapName();
+            this.addRowsToBuffer(buffer, mapName);
+            bufferNames.add(mapName);
+            buffer.clear();
+            this.addBufferedRows(bufferNames);
+        } else {
+            this.mvTable.addRowsToIndex(session, buffer, this);
+        }
+        if (remaining != 0) {
+            throw DbException.getInternalError("rowcount remaining=" + remaining + ' ' + getName());
+        }
+        HashBitObject hashBitObject = FileHelper.ReadObjectFromFile(FileHelper.generateFileName(table.getName(), this.columns));
+        System.out.println("===============================================================================================");
+        System.out.println("Rebuilt hashbit indexes of Table - " + table.getName() + " and Column - "
+                + this.columns[0].getName());
+        System.out.println(hashBitObject.toString());
+        System.out.println("===============================================================================================");
     }
 
     public void addSchemaObject() {
-        System.out.println("This is addSchemaObject method calles=d inside HashbitIndex Class");
+        FileHelper.addNewHashObject(this.mvTable.getName(), this.columns);
     }
 }
