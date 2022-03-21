@@ -359,20 +359,32 @@ public class MVTable extends TableBase {
         } else if (indexType.isSpatial()) {
             index = new MVSpatialIndex(session.getDatabase(), this, indexId,
                     indexName, cols, uniqueColumnCount, indexType);
+        } else if (indexType.isHashbit()) {
+            index = new HashBitIndex(session.getDatabase(), this, indexId,
+                    indexName, cols, uniqueColumnCount, indexType);
         } else {
             index = new MVSecondaryIndex(session.getDatabase(), this, indexId,
                     indexName, cols, uniqueColumnCount, indexType);
         }
         if (index.needRebuild()) {
-            rebuildIndex(session, index, indexName);
+            if (indexType.isHashbit()) {
+                ((HashBitIndex) index).rebuildIndex(session);
+            } else {
+                rebuildIndex(session, index, indexName);
+            }
         }
         index.setTemporary(isTemporary());
         if (index.getCreateSQL() != null) {
             index.setComment(indexComment);
-            if (isSessionTemporary) {
-                session.addLocalTempTableIndex(index);
+            //TODO: Complete the implementation
+            if (indexType.isHashbit()) {
+                ((HashBitIndex) index).addSchemaObject();
             } else {
-                database.addSchemaObject(session, index);
+                if (isSessionTemporary) {
+                    session.addLocalTempTableIndex(index);
+                } else {
+                    database.addSchemaObject(session, index);
+                }
             }
         }
         indexes.add(index);
@@ -703,8 +715,16 @@ public class MVTable extends TableBase {
      * @param index
      *            the index to append to
      */
-    private static void addRowsToIndex(SessionLocal session, ArrayList<Row> list, Index index) {
+    public static void addRowsToIndex(SessionLocal session, ArrayList<Row> list, Index index) {
         sortRows(list, index);
+        for (Row row : list) {
+            index.add(session, row);
+        }
+        list.clear();
+    }
+
+    public void addRowsToIndexAndSortByPrimaryKey(SessionLocal session, ArrayList<Row> list, Index index) {
+        sortRows(list, getPrimaryKey());
         for (Row row : list) {
             index.add(session, row);
         }
@@ -763,7 +783,7 @@ public class MVTable extends TableBase {
      * @param index
      *            the index to sort for
      */
-    private static void sortRows(ArrayList<? extends SearchRow> list, final Index index) {
+    public static void sortRows(ArrayList<? extends SearchRow> list, final Index index) {
         list.sort(index::compareRows);
     }
 

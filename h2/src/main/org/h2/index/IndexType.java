@@ -10,7 +10,7 @@ package org.h2.index;
  */
 public class IndexType {
 
-    private boolean primaryKey, persistent, unique, hash, scan, spatial;
+    private boolean primaryKey, persistent, unique, hash, scan, spatial, hashbit;
     private boolean belongsToConstraint;
 
     /**
@@ -62,12 +62,26 @@ public class IndexType {
      * @param spatial if a spatial index should be used
      * @return the index type
      */
-    public static IndexType createNonUnique(boolean persistent, boolean hash,
-            boolean spatial) {
+
+    public static IndexType createNonUnique(boolean persistent, boolean hash, boolean spatial) {
+        return createNonUnique(persistent, hash, spatial, false);
+    }
+
+    /**
+     * Create a non-unique index.
+     *
+     * @param persistent if the index is persistent
+     * @param hash if a hash index should be used
+     * @param spatial if a spatial index should be used
+     * @param hashbit if hashbit map index should be used
+     * @return the index type
+     */
+    public static IndexType createNonUnique(boolean persistent, boolean hash, boolean spatial, boolean hashbit) {
         IndexType type = new IndexType();
         type.persistent = persistent;
         type.hash = hash;
         type.spatial = spatial;
+        type.hashbit = hashbit;
         return type;
     }
 
@@ -146,6 +160,15 @@ public class IndexType {
      */
     public boolean isUnique() {
         return unique;
+    }
+
+    /**
+     * Is this a hashbit index?
+     *
+     * @return true if it is
+     */
+    public boolean isHashbit() {
+        return hashbit;
     }
 
     /**
