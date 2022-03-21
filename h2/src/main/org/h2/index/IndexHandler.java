@@ -8,6 +8,8 @@ import org.h2.expression.aggregate.AggregateType;
 import org.h2.expression.condition.Comparison;
 import org.h2.expression.condition.ConditionAndOr;
 import org.h2.expression.condition.ConditionAndOrN;
+import org.h2.index.hasbithelper.FileHelper;
+import org.h2.index.hasbithelper.HashBitObject;
 import org.h2.mvstore.tx.TransactionMap;
 import org.h2.result.SearchRow;
 import org.h2.table.Column;
@@ -16,17 +18,26 @@ import org.h2.value.Value;
 import org.h2.value.ValueBigint;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class IndexHandler {
     private static String hashBitIndexName  = "hashBitIndex";
     private static int[] outerAndOrTempBitmapArray = new int[]{1, 1, 1, 1, 0, 0, 0, 1};
 
+//    private static ArrayList<Integer> getBitMapIndices(Column column, Table table, String value) {
+//        ArrayList<Integer> integerArray = new ArrayList<>(outerAndOrTempBitmapArray.length);
+//        for (int j : outerAndOrTempBitmapArray) {
+//            integerArray.add(j);
+//        }
+//        return integerArray;
+//    }
+
     private static ArrayList<Integer> getBitMapIndices(Column column, Table table, String value) {
-        ArrayList<Integer> integerArray = new ArrayList<>(outerAndOrTempBitmapArray.length);
-        for (int j : outerAndOrTempBitmapArray) {
-            integerArray.add(j);
-        }
-        return integerArray;
+        return (ArrayList<Integer>) FileHelper.ReadObjectFromFile(FileHelper
+                .generateFileName(table.getName(), new Column[]{column}))
+                .getBitmapArray(value)
+                .stream().map( (number) -> (number) ? 1 : 0 )
+                .collect(Collectors.toList());
     }
 
     //TODO: When there is another funcs with count, there can be errors so handle these (Expression == 1) things or Do count separtly and remove that expression
