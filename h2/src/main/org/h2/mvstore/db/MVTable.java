@@ -359,20 +359,32 @@ public class MVTable extends TableBase {
         } else if (indexType.isSpatial()) {
             index = new MVSpatialIndex(session.getDatabase(), this, indexId,
                     indexName, cols, uniqueColumnCount, indexType);
+        } else if (indexType.isHashbit()) {
+            index = new HashBitIndex(session.getDatabase(), this, indexId,
+                    indexName, cols, uniqueColumnCount, indexType);
         } else {
             index = new MVSecondaryIndex(session.getDatabase(), this, indexId,
                     indexName, cols, uniqueColumnCount, indexType);
         }
         if (index.needRebuild()) {
-            rebuildIndex(session, index, indexName);
+            if (indexType.isHashbit()) {
+                ((HashBitIndex) index).rebuildIndex();
+            } else {
+                rebuildIndex(session, index, indexName);
+            }
         }
         index.setTemporary(isTemporary());
         if (index.getCreateSQL() != null) {
             index.setComment(indexComment);
-            if (isSessionTemporary) {
-                session.addLocalTempTableIndex(index);
+            //TODO: Complete the implementation
+            if (indexType.isHashbit()) {
+                ((HashBitIndex) index).addSchemaObject();
             } else {
-                database.addSchemaObject(session, index);
+                if (isSessionTemporary) {
+                    session.addLocalTempTableIndex(index);
+                } else {
+                    database.addSchemaObject(session, index);
+                }
             }
         }
         indexes.add(index);

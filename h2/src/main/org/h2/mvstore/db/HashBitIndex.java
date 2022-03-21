@@ -434,4 +434,11 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         }
     }
 
+    public void rebuildIndex() {
+        System.out.println("This is rebuildIndex method calles=d inside HashbitIndex Class");
+    }
+
+    public void addSchemaObject() {
+        System.out.println("This is addSchemaObject method calles=d inside HashbitIndex Class");
+    }
 }
