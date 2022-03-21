@@ -74,6 +74,7 @@ public class HashBitObject implements Serializable {
         }
         for (Map.Entry mapElement : hashBitValues.entrySet()) {
             ArrayList<Boolean> keyValue = (ArrayList<Boolean>) mapElement.getValue();
+            //TODO: We need to add false if we keep bitmap in primary index order, in that case we need to maintain a deletedIndex array and filter using it for query operation
             keyValue.remove(((int) index) - 1);
         }
         length--;
