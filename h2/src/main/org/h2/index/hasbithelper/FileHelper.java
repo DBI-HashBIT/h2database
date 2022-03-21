@@ -39,7 +39,7 @@ public class FileHelper {
         for (Column column: columns) {
             columnName += column.getName()+ ",";
         }
-        columnName.substring(0, columnName.length() - 1);
+        columnName = columnName.substring(0, columnName.length() - 1);
         return columnName;
     }
 

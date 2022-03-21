@@ -170,19 +170,6 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
     public void close(SessionLocal session) {
         // ok
     }
-//    @Override
-//    public void add(SessionLocal session, Row row) {
-    //        for (Column column : columns) {
-////            System.out.println(column.getTable().getName() + " " + column.getName() + " " + values[column.getColumnId()]);
-//        }
-
-    //        for (Column column : columns) {
-//            System.out.println(column.getTable().getName() + " " + column.getName() + " " + values[column.getColumnId()]);
-//        }
-//        for (Column column: this.columns) {
-//            System.out.println(column.getName());
-//        }
-//}
 
     @Override
     public void add(SessionLocal session, Row row) {
@@ -448,14 +435,6 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     public void rebuildIndex(SessionLocal session) {
         //TODO: Impplement this methos for all table. Currently, its implemented for MVTables
-
-        // Read entries in memory, sort them, write to a new map (in sorted
-        // order); repeat (using a new map for every block of 1 MB) until all
-        // record are read. Merge all maps to the target (using merge sort;
-        // duplicates are detected in the target). For randomly ordered data,
-        // this should use relatively few write operations.
-        // A possible optimization is: change the buffer size from "row count"
-        // to "amount of memory", and buffer index keys instead of rows.
         Index scan = this.table.getScanIndex(session);
         long remaining = scan.getRowCount(session);
         long total = remaining;
@@ -480,6 +459,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
             }
             remaining--;
         }
+        //TODO: We need table order, not the index sorted order
         this.mvTable.sortRows(buffer, this);
         if (!bufferNames.isEmpty()) {
             //TODO: Need to handle this by preventing updating the datamap
@@ -496,13 +476,12 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         }
         HashBitObject hashBitObject = FileHelper.ReadObjectFromFile(FileHelper.generateFileName(table.getName(), this.columns));
         System.out.println("===============================================================================================");
-        System.out.println("Rebuilt hashbit indexes of Table - " + table.getName() + " and Column - "
-                + this.columns[0].getName());
+        System.out.println("Rebuilt hashbit indexes of Table - " + table.getName() + " and Column - " + this.columns[0].getName());
         System.out.println(hashBitObject.toString());
         System.out.println("===============================================================================================");
     }
 
     public void addSchemaObject() {
-        FileHelper.addNewHashObject(this.mvTable.getName(), this.columns);
+        
     }
 }
