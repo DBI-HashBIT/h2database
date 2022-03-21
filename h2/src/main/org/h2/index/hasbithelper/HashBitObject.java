@@ -13,6 +13,9 @@ public class HashBitObject implements Serializable {
     }
 
     public void add(String value) {
+        if (value == null) {
+            value = "NULL";
+        }
         if (!hashBitValues.containsKey(value)) {
             hashBitValues.put(value, new ArrayList<>(Collections.nCopies(length, false)));
         }
@@ -29,11 +32,15 @@ public class HashBitObject implements Serializable {
     }
 
     public void update(int index, String value) {
+        if (value == null) {
+            value = "NULL";
+        }
         if (!hashBitValues.containsKey(value)) {
             System.out.println("No key :- " + value + " found in hashbit index");;
         }
         for (Map.Entry mapElement : hashBitValues.entrySet()) {
             String key = (String)mapElement.getKey();
+            //TODO: Update this code to get the previous one
             ArrayList<Boolean> keyValue = (ArrayList<Boolean>) mapElement.getValue();
             if (key.equals(value)) {
                 keyValue.set(index, true);
