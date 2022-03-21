@@ -180,7 +180,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         //TODO: This works only for column array with one column, Update that
         System.out.println("====================================================================================================================");
         System.out.println("Previous bitmap:- " + obj);
-        obj.add(values[column.getColumnId()].getString());
+        obj.add(values[column.getColumnId()].getString(), row.getKey());
         FileHelper.WriteObjectToFile(path, obj);
         System.out.println("After add value:- " + values[column.getColumnId()].getString() + ":- " + FileHelper.ReadObjectFromFile(path));
         System.out.println("====================================================================================================================");
@@ -220,26 +220,33 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public void remove(SessionLocal session, Row row) {
-        SearchRow searchRow = convertToKey(row, null);
-        TransactionMap<SearchRow,Value> map = getTransactionMap(session);
-        try {
-            if (map.remove(searchRow) == null) {
-                StringBuilder builder = new StringBuilder();
-                getSQL(builder, TRACE_SQL_FLAGS).append(": ").append(row.getKey());
-                throw DbException.get(ErrorCode.ROW_NOT_FOUND_WHEN_DELETING_1, builder.toString());
-            }
-        } catch (MVStoreException e) {
-            throw mvTable.convertException(e);
-        }
+        String path = FileHelper.generateFileName(table.getName(), this.columns);
+        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+        long index = row.getKey();
+        //TODO: This works only for column array with one column, Update that
+        System.out.println("====================================================================================================================");
+        System.out.println("Previous bitmap before remove:- " + obj);
+        obj.remove(index);
+        FileHelper.WriteObjectToFile(path, obj);
+        System.out.println("After remove index:- " + index + ":- " + FileHelper.ReadObjectFromFile(path));
+        System.out.println("====================================================================================================================");
     }
 
     @Override
     public void update(SessionLocal session, Row oldRow, Row newRow) {
-        SearchRow searchRowOld = convertToKey(oldRow, null);
-        SearchRow searchRowNew = convertToKey(newRow, null);
-        if (!rowsAreEqual(searchRowOld, searchRowNew)) {
-            super.update(session, oldRow, newRow);
-        }
+        Value[] newValues = newRow.getValueList();
+        Value[] oldValues = newRow.getValueList();
+        String path = FileHelper.generateFileName(table.getName(), this.columns);
+        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+        long index = oldRow.getKey();
+        Column column = this.columns[0];
+        //TODO: This works only for column array with one column, Update that
+//        System.out.println("====================================================================================================================");
+//        System.out.println("Previous bitmap before update:- " + obj);
+        obj.update(index, newValues[column.getColumnId()].getString(), oldValues[column.getColumnId()].getString());
+        FileHelper.WriteObjectToFile(path, obj);
+        System.out.println("After update index:- " + index + ":- " + FileHelper.ReadObjectFromFile(path));
+//        System.out.println("====================================================================================================================");
     }
 
     private boolean rowsAreEqual(SearchRow rowOne, SearchRow rowTwo) {
@@ -299,17 +306,13 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public void remove(SessionLocal session) {
-        TransactionMap<SearchRow,Value> map = getTransactionMap(session);
-        if (!map.isClosed()) {
-            Transaction t = session.getTransaction();
-            t.removeMap(map);
-        }
+        //TODO: Remove the index file
+        System.out.println("Remove the Index File");
     }
 
     @Override
     public void truncate(SessionLocal session) {
-        TransactionMap<SearchRow,Value> map = getTransactionMap(session);
-        map.clear();
+        FileHelper.addNewHashObject(table.getName(), this.columns);
     }
 
     @Override
@@ -331,7 +334,9 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
     @Override
     public boolean needRebuild() {
         try {
-            return dataMap.sizeAsLongMax() == 0;
+            String path = FileHelper.generateFileName(table.getName(), this.columns);
+            HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+            return obj.getSize() == 0;
         } catch (MVStoreException e) {
             throw DbException.get(ErrorCode.OBJECT_CLOSED, e);
         }
@@ -451,7 +456,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
             buffer.add(row);
             database.setProgress(DatabaseEventListener.STATE_CREATE_INDEX, n, i++, total);
             if (buffer.size() >= bufferSize) {
-                this.mvTable.sortRows(buffer, this);
+                this.mvTable.sortRows(buffer, this.table.getPrimaryKey());
                 String mapName = store.nextTemporaryMapName();
                 this.addRowsToBuffer(buffer, mapName);
                 bufferNames.add(mapName);
@@ -460,7 +465,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
             remaining--;
         }
         //TODO: We need table order, not the index sorted order
-        this.mvTable.sortRows(buffer, this);
+        this.mvTable.sortRows(buffer, this.table.getPrimaryKey());
         if (!bufferNames.isEmpty()) {
             //TODO: Need to handle this by preventing updating the datamap
             String mapName = store.nextTemporaryMapName();
@@ -469,7 +474,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
             buffer.clear();
             this.addBufferedRows(bufferNames);
         } else {
-            this.mvTable.addRowsToIndex(session, buffer, this);
+            this.mvTable.addRowsToIndexAndSortByPrimaryKey(session, buffer, this);
         }
         if (remaining != 0) {
             throw DbException.getInternalError("rowcount remaining=" + remaining + ' ' + getName());

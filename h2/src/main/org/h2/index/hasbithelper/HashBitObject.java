@@ -13,6 +13,10 @@ public class HashBitObject implements Serializable {
     }
 
     public void add(String value) {
+        add(value, -100);
+    }
+
+    public void add(String value, long index) {
         if (value == null) {
             value = "NULL";
         }
@@ -22,44 +26,68 @@ public class HashBitObject implements Serializable {
         for (Map.Entry mapElement : hashBitValues.entrySet()) {
             String key = (String)mapElement.getKey();
             ArrayList<Boolean> keyValue = (ArrayList<Boolean>) mapElement.getValue();
-            if (key.equals(value)) {
-                keyValue.add(true);
+            if (index < 0) {
+                if (key.equals(value)) {
+                    keyValue.add(true);
+                } else {
+                    keyValue.add(false);
+                }
             } else {
-                keyValue.add(false);
+                if (key.equals(value)) {
+                    keyValue.add(((int) index) - 1, true);
+                } else {
+                    keyValue.add(((int) index) - 1, false);
+                }
             }
         }
         length++;
     }
 
-    public void update(int index, String value) {
-        if (value == null) {
-            value = "NULL";
+    public void update(long index, String newValue, String oldValue) {
+        if (oldValue == null) {
+            oldValue = "NULL";
         }
-        if (!hashBitValues.containsKey(value)) {
-            System.out.println("No key :- " + value + " found in hashbit index");;
+        if (newValue == null) {
+            newValue = "NULL";
+        }
+        if (!hashBitValues.containsKey(newValue)) {
+            hashBitValues.put(newValue, new ArrayList<>(Collections.nCopies(length, false)));
+        }
+        if (index < 0 || index > length) {
+            System.out.println("No key :- " + oldValue + " found in hashbit index");;
         }
         for (Map.Entry mapElement : hashBitValues.entrySet()) {
             String key = (String)mapElement.getKey();
             //TODO: Update this code to get the previous one
             ArrayList<Boolean> keyValue = (ArrayList<Boolean>) mapElement.getValue();
-            if (key.equals(value)) {
-                keyValue.set(index, true);
+            if (key.equals(newValue)) {
+                keyValue.set(((int) index) - 1, true);
             } else {
-                keyValue.set(index, false);
+                keyValue.set(((int) index) - 1, false);
             }
         }
     }
 
-    public void remove(int index) {
-        if (!hashBitValues.containsKey(index)) {
+    public void remove(long index) {
+        if (index < 0 || index > length) {
             System.out.println("No key :- " + index + " found in hashbit index");;
         }
         for (Map.Entry mapElement : hashBitValues.entrySet()) {
-            String key = (String)mapElement.getKey();
             ArrayList<Boolean> keyValue = (ArrayList<Boolean>) mapElement.getValue();
-            keyValue.remove(index);
+            keyValue.remove(((int) index) - 1);
         }
         length--;
+    }
+
+    public int getSize() {
+        return length;
+    }
+
+    public ArrayList<Boolean> getBitmapArray(String key) {
+        if (hashBitValues.containsKey(key)) {
+            return hashBitValues.get(key);
+        }
+        return null;
     }
 
     @Override

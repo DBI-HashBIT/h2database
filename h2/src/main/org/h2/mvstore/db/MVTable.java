@@ -723,6 +723,14 @@ public class MVTable extends TableBase {
         list.clear();
     }
 
+    public void addRowsToIndexAndSortByPrimaryKey(SessionLocal session, ArrayList<Row> list, Index index) {
+        sortRows(list, getPrimaryKey());
+        for (Row row : list) {
+            index.add(session, row);
+        }
+        list.clear();
+    }
+
     /**
      * Formats details of a deadlock.
      *
