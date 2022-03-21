@@ -226,7 +226,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         //TODO: This works only for column array with one column, Update that
         System.out.println("====================================================================================================================");
         System.out.println("Previous bitmap before remove:- " + obj);
-        obj.remove(index);
+        obj.remove(index, false);
         FileHelper.WriteObjectToFile(path, obj);
         System.out.println("After remove index:- " + index + ":- " + FileHelper.ReadObjectFromFile(path));
         System.out.println("====================================================================================================================");

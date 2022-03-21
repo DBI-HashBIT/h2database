@@ -69,13 +69,22 @@ public class HashBitObject implements Serializable {
     }
 
     public void remove(long index) {
+        remove(index, false);
+    }
+
+    public void remove(long index, Boolean isDelete) {
+        // TODO: Index not be the correct one because, primarykey!= table order when we have deleted items in the middle
         if (index < 0 || index > length) {
             System.out.println("No key :- " + index + " found in hashbit index");;
         }
         for (Map.Entry mapElement : hashBitValues.entrySet()) {
             ArrayList<Boolean> keyValue = (ArrayList<Boolean>) mapElement.getValue();
-            //TODO: We need to add false if we keep bitmap in primary index order, in that case we need to maintain a deletedIndex array and filter using it for query operation
-            keyValue.remove(((int) index) - 1);
+//            TODO: We need to add false if we keep bitmap in primary index order, in that case we need to maintain a deletedIndex array and filter using it for query operation. But it will affect the update methods. So we need to to overwrite methods
+            if (isDelete) {
+                keyValue.set(((int) index) - 1, false);
+            } else {
+                keyValue.remove(((int) index) - 1);
+            }
         }
         length--;
     }
