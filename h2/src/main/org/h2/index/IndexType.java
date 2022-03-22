@@ -10,7 +10,7 @@ package org.h2.index;
  */
 public class IndexType {
 
-    private boolean primaryKey, persistent, unique, hash, scan, spatial;
+    private boolean primaryKey, persistent, unique, hash, scan, spatial, hashBit;
     private boolean belongsToConstraint;
 
     /**
@@ -83,6 +83,21 @@ public class IndexType {
         type.scan = true;
         return type;
     }
+
+    /**
+     * Create a hash-bit index.
+     *
+     * @param persistent if the index is persistent
+     * @return the index type
+     */
+    public static IndexType createHashBit(boolean persistent) {
+        IndexType type = new IndexType();
+        type.persistent = persistent;
+        type.hashBit = true;
+        return type;
+    }
+
+
 
     /**
      * Sets if this index belongs to a constraint.

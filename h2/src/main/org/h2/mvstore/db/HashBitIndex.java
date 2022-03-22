@@ -1,10 +1,7 @@
 package org.h2.mvstore.db;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
+
 import org.h2.api.ErrorCode;
 import org.h2.command.query.AllColumnsForPlan;
 import org.h2.engine.Database;
@@ -20,6 +17,7 @@ import org.h2.mvstore.tx.Transaction;
 import org.h2.mvstore.tx.TransactionMap;
 import org.h2.mvstore.tx.TransactionMap.TMIterator;
 import org.h2.mvstore.type.DataType;
+import org.h2.mvstore.type.StringDataType;
 import org.h2.result.Row;
 import org.h2.result.RowFactory;
 import org.h2.result.SearchRow;
@@ -30,23 +28,58 @@ import org.h2.value.Value;
 import org.h2.value.ValueNull;
 import org.h2.value.VersionedValue;
 
-public final class HashBitIndex extends MVIndex<SearchRow, Value> {
+// TODO: rename class to MVHashBitIndex
+public final class HashBitIndex extends MVIndex<String, Value> {
 
     /**
      * The multi-value table.
      */
     private final MVTable mvTable;
-    private final TransactionMap<SearchRow,Value> dataMap;
+    private final TransactionMap<String,Value> dataMap;
 
     public HashBitIndex(Database db, MVTable table, int id, String indexName,
                             IndexColumn[] columns, int uniqueColumnCount, IndexType indexType) {
         super(table, id, indexName, columns, uniqueColumnCount, indexType);
+
+        if (uniqueColumnCount != 0) {
+            throw DbException.getUnsupportedException(
+                    "Cannot index unique columns in a hash-bit index");
+        }
+        if (columns.length != 1) {
+            throw DbException.getUnsupportedException(
+                    "Can only index one column in a hash-bit index");
+        }
+
+        IndexColumn col = columns[0];
+
+        if ((col.sortType & SortOrder.DESCENDING) != 0) {
+            throw DbException.getUnsupportedException(
+                    "Cannot index in descending order");
+        }
+        if ((col.sortType & SortOrder.NULLS_FIRST) != 0) {
+            throw DbException.getUnsupportedException(
+                    "Nulls first is not supported");
+        }
+        if ((col.sortType & SortOrder.NULLS_LAST) != 0) {
+            throw DbException.getUnsupportedException(
+                    "Nulls last is not supported");
+        }
+
+        List<Integer> acceptedTypes = Arrays.asList(Value.CHAR, Value.VARCHAR, Value.VARCHAR_IGNORECASE);
+        if (!acceptedTypes.contains(col.column.getType().getValueType())) {
+            throw DbException.getUnsupportedException(
+                    "Hash-bit index on non-character column, "
+                            + col.column.getCreateSQL());
+        }
+
         this.mvTable = table;
         if (!database.isStarting()) {
+            // TODO: remove. (redundant type compatibility check)
             checkIndexColumnTypes(columns);
         }
+
         String mapName = "index." + getId();
-        RowDataType keyType = getRowFactory().getRowDataType();
+        StringDataType keyType = StringDataType.INSTANCE;
         Transaction t = mvTable.getTransactionBegin();
         dataMap = t.openMap(mapName, keyType, NullValueDataType.INSTANCE);
         dataMap.map.setVolatile(!table.isPersistData() || !indexType.isPersistent());
