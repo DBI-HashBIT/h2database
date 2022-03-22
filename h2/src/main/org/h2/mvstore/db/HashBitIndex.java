@@ -196,12 +196,12 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         HashBitObject obj = FileHelper.ReadObjectFromFile(path);
         Column column = this.columns[0];
         //TODO: This works only for column array with one column, Update that
-        System.out.println("====================================================================================================================");
-        System.out.println("Previous bitmap:- " + obj);
+//        System.out.println("====================================================================================================================");
+//        System.out.println("Previous bitmap:- " + obj);
         obj.add(values[column.getColumnId()].getString(), row.getKey());
         FileHelper.WriteObjectToFile(path, obj);
-        System.out.println("After add value:- " + values[column.getColumnId()].getString() + ":- " + FileHelper.ReadObjectFromFile(path));
-        System.out.println("====================================================================================================================");
+//        System.out.println("After add value:- " + values[column.getColumnId()].getString() + ":- " + FileHelper.ReadObjectFromFile(path));
+//        System.out.println("====================================================================================================================");
     }
 
     private void checkUnique(boolean repeatableRead, TransactionMap<SearchRow,Value> map, SearchRow row,
@@ -242,12 +242,12 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         HashBitObject obj = FileHelper.ReadObjectFromFile(path);
         long index = row.getKey();
         //TODO: This works only for column array with one column, Update that
-        System.out.println("====================================================================================================================");
-        System.out.println("Previous bitmap before remove:- " + obj);
+//        System.out.println("====================================================================================================================");
+//        System.out.println("Previous bitmap before remove:- " + obj);
         obj.remove(index, false);
         FileHelper.WriteObjectToFile(path, obj);
-        System.out.println("After remove index:- " + index + ":- " + FileHelper.ReadObjectFromFile(path));
-        System.out.println("====================================================================================================================");
+//        System.out.println("After remove index:- " + index + ":- " + FileHelper.ReadObjectFromFile(path));
+//        System.out.println("====================================================================================================================");
     }
 
     @Override
@@ -340,6 +340,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public Cursor findFirstOrLast(SessionLocal session, boolean first) {
+//        System.out.println("Query Check - The method findFirstOrLast is called, Boolwan first :-  " + first);
         TransactionMap.TMIterator<SearchRow, Value, SearchRow> iter = getTransactionMap(session).keyIterator(null, !first);
         for (SearchRow key; (key = iter.fetchNext()) != null;) {
             if (key.getValue(columnIds[0]) != ValueNull.INSTANCE) {
@@ -362,14 +363,17 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public long getRowCount(SessionLocal session) {
-        TransactionMap<SearchRow,Value> map = getTransactionMap(session);
-        return map.sizeAsLong();
+        String path = FileHelper.generateFileName(table.getName(), this.columns);
+        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+        return obj.getSize();
     }
 
     @Override
     public long getRowCountApproximation(SessionLocal session) {
         try {
-            return dataMap.sizeAsLongMax();
+            String path = FileHelper.generateFileName(table.getName(), this.columns);
+            HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+            return obj.getSize();
         } catch (MVStoreException e) {
             throw DbException.get(ErrorCode.OBJECT_CLOSED, e);
         }
@@ -498,10 +502,10 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
             throw DbException.getInternalError("rowcount remaining=" + remaining + ' ' + getName());
         }
         HashBitObject hashBitObject = FileHelper.ReadObjectFromFile(FileHelper.generateFileName(table.getName(), this.columns));
-        System.out.println("===============================================================================================");
-        System.out.println("Rebuilt hashbit indexes of Table - " + table.getName() + " and Column - " + this.columns[0].getName());
-        System.out.println(hashBitObject.toString());
-        System.out.println("===============================================================================================");
+//        System.out.println("===============================================================================================");
+//        System.out.println("Rebuilt hashbit indexes of Table - " + table.getName() + " and Column - " + this.columns[0].getName());
+//        System.out.println(hashBitObject.toString());
+//        System.out.println("===============================================================================================");
     }
 
     public void addSchemaObject() {
