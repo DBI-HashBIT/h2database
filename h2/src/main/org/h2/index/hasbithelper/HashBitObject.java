@@ -97,7 +97,7 @@ public class HashBitObject implements Serializable {
         if (hashBitValues.containsKey(key)) {
             return hashBitValues.get(key);
         }
-        return null;
+        return new ArrayList<>(Collections.nCopies(length, false));
     }
 
     @Override

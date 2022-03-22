@@ -528,8 +528,10 @@ public class Select extends Query {
         while (topTableFilter.next()) {
             globalRowNumber++;
             if (!isConditionBitmapTrueForRow(getAndOrBitmap(), globalRowNumber)) {
+                System.out.println("Stop");
                 continue;
             }
+            System.out.println("Continue");
             setCurrentRowNumber(rowNumber + 1);
             if (isForUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                 rowNumber++;
@@ -758,7 +760,7 @@ public class Select extends Query {
     }
 
     private ArrayList<Integer> generateAndOrBitmap() {
-        return IndexHandler.andOrOperationIndexes(condition);
+        return IndexHandler.andOrOperationIndexes(condition, session);
     }
 
     private Boolean isConditionBitmapTrueForRow(ArrayList<Integer> bitmap, int rowNumber) {
@@ -1849,8 +1851,10 @@ public class Select extends Query {
                 this.globalRowIndex += 1;
                 setCurrentRowNumber(rowNumber + 1);
                 if (!isConditionBitmapTrueForRow(getAndOrBitmap(), this.globalRowIndex)) {
+                    System.out.println("Stop : 2");
                     continue;
                 }
+                System.out.println("Continue : 2");
                 // This method may lock rows
                 if (forUpdate ? isConditionMetForUpdate() : isConditionMet()) {
                     ++rowNumber;
