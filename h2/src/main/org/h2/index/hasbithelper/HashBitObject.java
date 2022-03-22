@@ -6,7 +6,7 @@ import java.util.*;
 public class HashBitObject implements Serializable {
     private static final int NO_OF_BUCKETS = 256;
 
-    public HashMap<String, ArrayList<Boolean>> hashBitValues;
+    public HashMap<Integer, ArrayList<Boolean>> hashBitValues;
     public int length;
 
     public HashBitObject() {
@@ -22,20 +22,22 @@ public class HashBitObject implements Serializable {
         if (value == null) {
             value = "NULL";
         }
-        if (!hashBitValues.containsKey(value)) {
-            hashBitValues.put(value, new ArrayList<>(Collections.nCopies(length, false)));
+        int hash = hash(value);
+
+        if (!hashBitValues.containsKey(hash)) {
+            hashBitValues.put(hash, new ArrayList<>(Collections.nCopies(length, false)));
         }
-        for (Map.Entry<String, ArrayList<Boolean>> mapElement : hashBitValues.entrySet()) {
-            String key = mapElement.getKey();
+        for (Map.Entry<Integer, ArrayList<Boolean>> mapElement : hashBitValues.entrySet()) {
+            int key = mapElement.getKey();
             ArrayList<Boolean> keyValue = mapElement.getValue();
             if (index < 0) {
-                if (key.equals(value)) {
+                if (key == hash) {
                     keyValue.add(true);
                 } else {
                     keyValue.add(false);
                 }
             } else {
-                if (key.equals(value)) {
+                if (key == hash) {
                     keyValue.add(((int) index) - 1, true);
                 } else {
                     keyValue.add(((int) index) - 1, false);
@@ -52,17 +54,21 @@ public class HashBitObject implements Serializable {
         if (newValue == null) {
             newValue = "NULL";
         }
-        if (!hashBitValues.containsKey(newValue)) {
-            hashBitValues.put(newValue, new ArrayList<>(Collections.nCopies(length, false)));
+
+        int oldValueHash = hash(oldValue);
+        int newValueHash = hash(newValue);
+
+        if (!hashBitValues.containsKey(newValueHash)) {
+            hashBitValues.put(newValueHash, new ArrayList<>(Collections.nCopies(length, false)));
         }
         if (index < 0 || index > length) {
-            System.out.println("No key :- " + oldValue + " found in hashbit index");;
+            System.out.println("No key :- " + oldValueHash + " for " + oldValue +  "found in hashbit index");;
         }
-        for (Map.Entry mapElement : hashBitValues.entrySet()) {
-            String key = (String)mapElement.getKey();
+        for (Map.Entry<Integer, ArrayList<Boolean>> mapElement : hashBitValues.entrySet()) {
+            int key = mapElement.getKey();
             //TODO: Update this code to get the previous one
-            ArrayList<Boolean> keyValue = (ArrayList<Boolean>) mapElement.getValue();
-            if (key.equals(newValue)) {
+            ArrayList<Boolean> keyValue = mapElement.getValue();
+            if (key == newValueHash) {
                 keyValue.set(((int) index) - 1, true);
             } else {
                 keyValue.set(((int) index) - 1, false);
