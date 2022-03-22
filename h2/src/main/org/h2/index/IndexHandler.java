@@ -1,5 +1,6 @@
 package org.h2.index;
 
+import org.h2.engine.SessionLocal;
 import org.h2.expression.Expression;
 import org.h2.expression.ExpressionColumn;
 import org.h2.expression.ValueExpression;
@@ -33,15 +34,19 @@ public class IndexHandler {
 //    }
 
     private static ArrayList<Integer> getBitMapIndices(Column column, Table table, String value) {
-        return (ArrayList<Integer>) FileHelper.ReadObjectFromFile(FileHelper
+        ArrayList<Boolean> bitmapArray = FileHelper.ReadObjectFromFile(FileHelper
                 .generateFileName(table.getName(), new Column[]{column}))
-                .getBitmapArray(value)
+                .getBitmapArray(value);
+        if (bitmapArray == null) {
+            return null;
+        }
+        return (ArrayList<Integer>) (bitmapArray
                 .stream().map( (number) -> (number) ? 1 : 0 )
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     //TODO: When there is another funcs with count, there can be errors so handle these (Expression == 1) things or Do count separtly and remove that expression
-    public static ArrayList<Integer> comparisonOperationIndexes(Expression expression) {
+    public static ArrayList<Integer> comparisonOperationIndexes(Expression expression, SessionLocal session) {
         int i = 0;
         Column column;
         String columnName;
@@ -57,12 +62,11 @@ public class IndexHandler {
                 columnName = column.getName();
                 table = column.getTable();
                 columnIndex = table.getIndexForColumn(column, false, false);
-                if (comparison.getRight() instanceof ValueExpression &&
-                        (comparison.getCompareType() ==  Comparison.EQUAL) &&
-                        (true || columnIndex.indexType.equals(hashBitIndexName) &&
-                                columnIndex.indexColumns.length == 1)) {
-                    //Get Bitmap Indices
-                    return getBitMapIndices(column, table, "");
+                if (comparison.getRight() instanceof ValueExpression
+                        && comparison.getCompareType() ==  Comparison.EQUAL
+                        && columnIndex .indexType.isHashbit()
+                        && columnIndex.indexColumns.length == 1) {
+                    return getBitMapIndices(column, table, comparison.getRight().getValue(session).getString());
                 }
             }
         }
@@ -70,18 +74,18 @@ public class IndexHandler {
     }
 
     //TODO: When there is another funcs with AND/OR, there can be errors so handle these (Expression == 1) things or Do count separtly and remove that expression
-    public static ArrayList<Integer> andOrOperationIndexes(Expression expression) {
+    public static ArrayList<Integer> andOrOperationIndexes(Expression expression, SessionLocal session) {
         ArrayList<Integer> resultBitmap = new ArrayList<>(), left = null, right = null, results = null, values = null,
                 tempresults = null;
         ConditionAndOr conditionAndOr;
         ConditionAndOrN conditionAndOrn;
         Expression ex;
         if (expression instanceof Comparison) {
-            results = comparisonOperationIndexes(expression);
+            results = comparisonOperationIndexes(expression, session);
         } else if (expression instanceof ConditionAndOr) {
             conditionAndOr = (ConditionAndOr) expression;
-            left = andOrOperationIndexes(conditionAndOr.getLeft());
-            right = andOrOperationIndexes(conditionAndOr.getRight());
+            left = andOrOperationIndexes(conditionAndOr.getLeft(), session);
+            right = andOrOperationIndexes(conditionAndOr.getRight(), session);
             if (left != null && right != null) {
                 results = andOrBitMap(left, right, conditionAndOr.getAndOrType());
             }
@@ -89,7 +93,7 @@ public class IndexHandler {
             conditionAndOrn = (ConditionAndOrN) expression;
             for (int i = 0; i < conditionAndOrn.getSubexpressionCount(); i++) {
                 ex = conditionAndOrn.getSubexpression(i);
-                tempresults = andOrOperationIndexes(ex);
+                tempresults = andOrOperationIndexes(ex, session);
                 if (tempresults != null) {
                     if (results == null) {
                         results = tempresults;

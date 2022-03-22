@@ -823,6 +823,11 @@ public class TableFilter implements ColumnResolver {
     }
 
     public void setIndex(Index index) {
+        if (index.getIndexType().isHashbit()) {
+            this.index = index.getTable().getPrimaryKey();
+            cursor.setIndex(index.getTable().getPrimaryKey());
+            return;
+        }
         this.index = index;
         cursor.setIndex(index);
     }
