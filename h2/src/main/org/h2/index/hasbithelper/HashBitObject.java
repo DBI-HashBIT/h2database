@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.*;
 
 public class HashBitObject implements Serializable {
+    private static final int NO_OF_BUCKETS = 256;
+
     public HashMap<String, ArrayList<Boolean>> hashBitValues;
     public int length;
 
@@ -120,4 +122,10 @@ public class HashBitObject implements Serializable {
         }
         return string;
     }
+
+    public int hash(String key) {
+        return key.hashCode() % NO_OF_BUCKETS;
+    }
+
+
 }
