@@ -54,6 +54,15 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
                     "Can only index one column in a hash-bit index");
         }
 
+        IndexColumn col = columns[0];
+
+        List<Integer> acceptedTypes = Arrays.asList(Value.CHAR, Value.VARCHAR, Value.VARCHAR_IGNORECASE);
+        if (!acceptedTypes.contains(col.column.getType().getValueType())) {
+            throw DbException.getUnsupportedException(
+                    "Hash-bit index on non-character column, "
+                            + col.column.getCreateSQL());
+        }
+
         this.mvTable = table;
         if (!database.isStarting()) {
             checkIndexColumnTypes(columns);
