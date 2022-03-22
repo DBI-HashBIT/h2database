@@ -43,8 +43,17 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     public HashBitIndex(Database db, MVTable table, int id, String indexName,
                         IndexColumn[] columns, int uniqueColumnCount, IndexType indexType) {
-        //TODO: Pass a error if there is more than one column
         super(table, id, indexName, columns, uniqueColumnCount, indexType);
+
+        if (uniqueColumnCount != 0) {
+            throw DbException.getUnsupportedException(
+                    "Cannot index unique columns in a hash-bit index");
+        }
+        if (columns.length != 1) {
+            throw DbException.getUnsupportedException(
+                    "Can only index one column in a hash-bit index");
+        }
+
         this.mvTable = table;
         if (!database.isStarting()) {
             checkIndexColumnTypes(columns);
