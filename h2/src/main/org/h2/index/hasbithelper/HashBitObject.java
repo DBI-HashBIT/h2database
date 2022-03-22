@@ -102,10 +102,8 @@ public class HashBitObject implements Serializable {
     }
 
     public ArrayList<Boolean> getBitmapArray(String key) {
-        if (hashBitValues.containsKey(key)) {
-            return hashBitValues.get(key);
-        }
-        return null;
+        int hash = hash(key);
+        return hashBitValues.get(hash);
     }
 
     @Override
