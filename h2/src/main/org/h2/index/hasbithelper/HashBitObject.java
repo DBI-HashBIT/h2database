@@ -23,9 +23,9 @@ public class HashBitObject implements Serializable {
         if (!hashBitValues.containsKey(value)) {
             hashBitValues.put(value, new ArrayList<>(Collections.nCopies(length, false)));
         }
-        for (Map.Entry mapElement : hashBitValues.entrySet()) {
-            String key = (String)mapElement.getKey();
-            ArrayList<Boolean> keyValue = (ArrayList<Boolean>) mapElement.getValue();
+        for (Map.Entry<String, ArrayList<Boolean>> mapElement : hashBitValues.entrySet()) {
+            String key = mapElement.getKey();
+            ArrayList<Boolean> keyValue = mapElement.getValue();
             if (index < 0) {
                 if (key.equals(value)) {
                     keyValue.add(true);
