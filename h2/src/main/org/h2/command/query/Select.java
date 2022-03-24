@@ -429,7 +429,11 @@ public class Select extends Query {
     }
 
     boolean isConditionMetForUpdate() {
-        if (isConditionMet()) {
+        return isConditionMetForUpdate(false);
+    }
+
+    boolean isConditionMetForUpdate(Boolean bitmapValue) {
+        if (bitmapValue || isConditionMet()) {
             int count = filters.size();
             boolean notChanged = true;
             for (int i = 0; i < count; i++) {
@@ -450,7 +454,7 @@ public class Select extends Query {
                     }
                 }
             }
-            return notChanged || isConditionMet();
+            return notChanged || bitmapValue || isConditionMet();
         }
         return false;
     }
@@ -525,15 +529,20 @@ public class Select extends Query {
         long rowNumber = 0;
         setCurrentRowNumber(0);
         int globalRowNumber = -1;
+        boolean bitmapValue;
+        boolean conditionMetvalue;
+        ArrayList<Integer> generatedBitmap = getAndOrBitmap();
         while (topTableFilter.next()) {
             globalRowNumber++;
-            if (!isConditionBitmapTrueForRow(getAndOrBitmap(), globalRowNumber)) {
+            bitmapValue = isConditionBitmapTrueForRow(generatedBitmap, globalRowNumber);
+            if (!bitmapValue) {
                 System.out.println("Stop");
                 continue;
             }
             System.out.println("Continue");
             setCurrentRowNumber(rowNumber + 1);
-            if (isForUpdate ? isConditionMetForUpdate() : isConditionMet()) {
+            conditionMetvalue = generatedBitmap != null || isConditionMet();
+            if (isForUpdate ? isConditionMetForUpdate(generatedBitmap != null) : conditionMetvalue) {
                 rowNumber++;
                 groupData.nextSource();
                 updateAgg(columnCount, stage);
@@ -1847,16 +1856,21 @@ public class Select extends Query {
 
         @Override
         protected Value[] fetchNextRow() {
+            Boolean bitmapValue = false;
+            Boolean conditionMetValue = false;
+            ArrayList<Integer> generatedBitmap = getAndOrBitmap();
             while (topTableFilter.next()) {
                 this.globalRowIndex += 1;
                 setCurrentRowNumber(rowNumber + 1);
-                if (!isConditionBitmapTrueForRow(getAndOrBitmap(), this.globalRowIndex)) {
+                bitmapValue = isConditionBitmapTrueForRow(generatedBitmap, this.globalRowIndex);
+                if (!bitmapValue) {
                     System.out.println("Stop : 2");
                     continue;
                 }
                 System.out.println("Continue : 2");
+                conditionMetValue = (generatedBitmap != null) || isConditionMet();
                 // This method may lock rows
-                if (forUpdate ? isConditionMetForUpdate() : isConditionMet()) {
+                if (forUpdate ? isConditionMetForUpdate(generatedBitmap != null) : conditionMetValue) {
                     ++rowNumber;
                     Value[] row = new Value[columnCount];
                     for (int i = 0; i < columnCount; i++) {
