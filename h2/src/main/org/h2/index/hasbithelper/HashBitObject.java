@@ -134,5 +134,24 @@ public class HashBitObject implements Serializable {
         return key.hashCode() % NO_OF_BUCKETS;
     }
 
+    private void prettyPrint() {
+        hashBitValues.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEachOrdered(mapElement -> {
+                    Integer key = mapElement.getKey();
+                    System.out.print(key + "\t:- [ ");
+                    ArrayList<Boolean> keyValue = mapElement.getValue();
+                    for (Boolean val: keyValue) {
+                        if (val) {
+                            System.out.print("1 , ");
+                        } else {
+                            System.out.print("0 , ");
+                        }
+                    }
+                    System.out.println("]");
+                });
+    }
+
 
 }
