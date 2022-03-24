@@ -4,7 +4,8 @@ import java.io.Serializable;
 import java.util.*;
 
 public class HashBitObject implements Serializable {
-    private static final int NO_OF_BUCKETS = 256;
+    // set to a power of 2 for uniform distribution
+    private int noOfBuckets = 256;
 
     public HashMap<Integer, ArrayList<Boolean>> hashBitValues;
     public int length;
@@ -45,6 +46,8 @@ public class HashBitObject implements Serializable {
             }
         }
         length++;
+        System.out.println("Added " + value);
+        System.out.println(this);;
     }
 
     public void update(long index, String newValue, String oldValue) {
@@ -109,6 +112,10 @@ public class HashBitObject implements Serializable {
         return new ArrayList<>(Collections.nCopies(length, false));
     }
 
+    public void setNoOfBuckets(int noOfBuckets) {
+        this.noOfBuckets = noOfBuckets;
+    }
+
     @Override
     public String toString() {
         StringBuffer string = new StringBuffer();
@@ -131,5 +138,8 @@ public class HashBitObject implements Serializable {
         return string.toString();
     }
 
+    private int hash(String key) {
+        return (key.hashCode() & 0x7fffffff) % noOfBuckets;
+    }
 
 }
