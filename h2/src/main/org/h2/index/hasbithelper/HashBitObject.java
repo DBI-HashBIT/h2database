@@ -111,46 +111,24 @@ public class HashBitObject implements Serializable {
 
     @Override
     public String toString() {
-        String string = "";
-        for (Map.Entry mapElement : hashBitValues.entrySet()) {
-            String key = (String)mapElement.getKey();
-            string += key;
-            string += " :- [";
-            ArrayList<Boolean> keyValue = (ArrayList<Boolean>) mapElement.getValue();
-            for (Boolean val: keyValue) {
-                if (val) {
-                    string += "1 , ";
-                } else {
-                    string += "0 , ";
-                }
-            }
-            string = string.substring(0, string.length() - 2);
-            string += "]\n";
-        }
-        return string;
-    }
-
-    private int hash(String key) {
-        return (key.hashCode() & 0x7fffffff) % NO_OF_BUCKETS;
-    }
-
-    private void prettyPrint() {
+        StringBuffer string = new StringBuffer();
         hashBitValues.entrySet()
                 .stream()
                 .sorted(Map.Entry.comparingByKey())
                 .forEachOrdered(mapElement -> {
                     Integer key = mapElement.getKey();
-                    System.out.print(key + "\t:- [ ");
+                    string.append(key).append("\t:- [ ");
                     ArrayList<Boolean> keyValue = mapElement.getValue();
                     for (Boolean val: keyValue) {
                         if (val) {
-                            System.out.print("1 , ");
+                            string.append("1 , ");
                         } else {
-                            System.out.print("0 , ");
+                            string.append("0 , ");
                         }
                     }
-                    System.out.println("]");
+                    string.append("]\n");
                 });
+        return string.toString();
     }
 
 
