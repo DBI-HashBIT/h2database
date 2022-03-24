@@ -40,6 +40,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
      */
     private final MVTable mvTable;
     private final TransactionMap<SearchRow, Value> dataMap;
+    private final int numberOfBuckets;
 
     public HashBitIndex(Database db, MVTable table, int id, String indexName,
                         IndexColumn[] columns, int uniqueColumnCount, IndexType indexType) {
@@ -81,7 +82,10 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
                     "Incompatible key type, expected " + keyType + " but got "
                             + dataMap.getKeyType() + " for index " + indexName);
         }
-        FileHelper.addNewHashObject(table.getName(), this.columns);
+        numberOfBuckets = indexType.getNumberOfHashbitBuckets() > 0 ?
+                indexType.getNumberOfHashbitBuckets() : HashBitObject.DEFAULT_NUMBER_OF_BUCKETS;
+
+        FileHelper.addNewHashObject(table.getName(), this.columns, numberOfBuckets);
     }
 
     @Override
@@ -330,7 +334,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public void truncate(SessionLocal session) {
-        FileHelper.addNewHashObject(table.getName(), this.columns);
+        FileHelper.addNewHashObject(table.getName(), this.columns, numberOfBuckets);
     }
 
     @Override

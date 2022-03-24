@@ -43,7 +43,7 @@ public class FileHelper {
         return columnName;
     }
 
-    public static void addNewHashObject(String tableName, Column[] columns) {
+    public static void addNewHashObject(String tableName, Column[] columns, int numberOfBuckets) {
         String directoryName = FileHelper.directoryName;
         String fileName = generateFileName(tableName, columns);
 
@@ -52,7 +52,7 @@ public class FileHelper {
             directory.mkdir();
         }
         File file = new File(directoryName + separator + fileName);
-        WriteObjectToFile(fileName, new HashBitObject());
+        WriteObjectToFile(fileName, new HashBitObject(numberOfBuckets));
     }
 
     public static String generateFileName(String tableName, Column[] columns) {

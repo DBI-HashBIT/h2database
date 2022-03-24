@@ -12,6 +12,7 @@ public class IndexType {
 
     private boolean primaryKey, persistent, unique, hash, scan, spatial, hashbit;
     private boolean belongsToConstraint;
+    private int numberOfHashbitBuckets;
 
     /**
      * Create a primary key index.
@@ -64,7 +65,7 @@ public class IndexType {
      */
 
     public static IndexType createNonUnique(boolean persistent, boolean hash, boolean spatial) {
-        return createNonUnique(persistent, hash, spatial, false);
+        return createNonUnique(persistent, hash, spatial, false, 0);
     }
 
     /**
@@ -76,12 +77,13 @@ public class IndexType {
      * @param hashbit if hashbit map index should be used
      * @return the index type
      */
-    public static IndexType createNonUnique(boolean persistent, boolean hash, boolean spatial, boolean hashbit) {
+    public static IndexType createNonUnique(boolean persistent, boolean hash, boolean spatial, boolean hashbit, int numberOfHashbitBuckets) {
         IndexType type = new IndexType();
         type.persistent = persistent;
         type.hash = hash;
         type.spatial = spatial;
         type.hashbit = hashbit;
+        type.numberOfHashbitBuckets = hashbit ? numberOfHashbitBuckets : 0;
         return type;
     }
 
@@ -169,6 +171,10 @@ public class IndexType {
      */
     public boolean isHashbit() {
         return hashbit;
+    }
+
+    public int getNumberOfHashbitBuckets() {
+        return numberOfHashbitBuckets;
     }
 
     /**

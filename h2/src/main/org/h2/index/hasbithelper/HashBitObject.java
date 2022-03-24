@@ -4,7 +4,10 @@ import java.io.Serializable;
 import java.util.*;
 
 public class HashBitObject implements Serializable {
-    private static final int NO_OF_BUCKETS = 256;
+    public static final int DEFAULT_NUMBER_OF_BUCKETS = 256;
+
+    // set to a power of 2 for uniform distribution
+    private int noOfBuckets;
 
     public HashMap<Integer, ArrayList<Boolean>> hashBitValues;
     public int length;
@@ -12,6 +15,12 @@ public class HashBitObject implements Serializable {
     public HashBitObject() {
         this.hashBitValues = new HashMap<>();
         length = 0;
+    }
+
+    public HashBitObject(int noOfBuckets) {
+        this();
+        this.noOfBuckets = noOfBuckets;
+        System.out.println("HashBitObject created with " + noOfBuckets + " buckets");
     }
 
     public void add(String value) {
@@ -45,6 +54,8 @@ public class HashBitObject implements Serializable {
             }
         }
         length++;
+        System.out.println("Added " + value);
+        System.out.println(this);;
     }
 
     public void update(long index, String newValue, String oldValue) {
@@ -111,28 +122,28 @@ public class HashBitObject implements Serializable {
 
     @Override
     public String toString() {
-        String string = "";
-        for (Map.Entry mapElement : hashBitValues.entrySet()) {
-            String key = (String)mapElement.getKey();
-            string += key;
-            string += " :- [";
-            ArrayList<Boolean> keyValue = (ArrayList<Boolean>) mapElement.getValue();
-            for (Boolean val: keyValue) {
-                if (val) {
-                    string += "1 , ";
-                } else {
-                    string += "0 , ";
-                }
-            }
-            string = string.substring(0, string.length() - 2);
-            string += "]\n";
-        }
-        return string;
+        StringBuffer string = new StringBuffer();
+        hashBitValues.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEachOrdered(mapElement -> {
+                    Integer key = mapElement.getKey();
+                    string.append(key).append("\t:- [ ");
+                    ArrayList<Boolean> keyValue = mapElement.getValue();
+                    for (Boolean val: keyValue) {
+                        if (val) {
+                            string.append("1 , ");
+                        } else {
+                            string.append("0 , ");
+                        }
+                    }
+                    string.append("]\n");
+                });
+        return string.toString();
     }
 
-    public int hash(String key) {
-        return key.hashCode() % NO_OF_BUCKETS;
+    private int hash(String key) {
+        return (key.hashCode() & 0x7fffffff) % noOfBuckets;
     }
-
 
 }
