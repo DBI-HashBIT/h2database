@@ -4,8 +4,10 @@ import java.io.Serializable;
 import java.util.*;
 
 public class HashBitObject implements Serializable {
+    public static final int DEFAULT_NUMBER_OF_BUCKETS = 256;
+
     // set to a power of 2 for uniform distribution
-    private int noOfBuckets = 256;
+    private int noOfBuckets;
 
     public HashMap<Integer, ArrayList<Boolean>> hashBitValues;
     public int length;
@@ -13,6 +15,12 @@ public class HashBitObject implements Serializable {
     public HashBitObject() {
         this.hashBitValues = new HashMap<>();
         length = 0;
+    }
+
+    public HashBitObject(int noOfBuckets) {
+        this();
+        this.noOfBuckets = noOfBuckets;
+        System.out.println("HashBitObject created with " + noOfBuckets + " buckets");
     }
 
     public void add(String value) {
@@ -110,10 +118,6 @@ public class HashBitObject implements Serializable {
             return hashBitValues.get(hash);
         }
         return new ArrayList<>(Collections.nCopies(length, false));
-    }
-
-    public void setNoOfBuckets(int noOfBuckets) {
-        this.noOfBuckets = noOfBuckets;
     }
 
     @Override
