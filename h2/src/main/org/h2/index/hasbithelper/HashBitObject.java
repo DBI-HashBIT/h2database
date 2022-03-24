@@ -130,8 +130,8 @@ public class HashBitObject implements Serializable {
         return string;
     }
 
-    public int hash(String key) {
-        return key.hashCode() % NO_OF_BUCKETS;
+    private int hash(String key) {
+        return (key.hashCode() & 0x7fffffff) % NO_OF_BUCKETS;
     }
 
     private void prettyPrint() {
