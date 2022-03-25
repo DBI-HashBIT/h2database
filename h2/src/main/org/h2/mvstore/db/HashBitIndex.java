@@ -195,17 +195,17 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public void add(SessionLocal session, Row row) {
+
+        MVPrimaryIndex pindex = this.mvTable.getPrimaryIndex();
+        long index = row.getKey();
+
         Value[] values = row.getValueList();
         String path = FileHelper.generateFileName(table.getName(), this.columns);
         HashBitObject obj = FileHelper.ReadObjectFromFile(path);
         Column column = this.columns[0];
-        //TODO: This works only for column array with one column, Update that
-//        System.out.println("====================================================================================================================");
-//        System.out.println("Previous bitmap:- " + obj);
-        obj.add(values[column.getColumnId()].getString(), row.getKey());
+        
+        obj.add(values[column.getColumnId()].getString(), pindex.getIndexForKey(index));
         FileHelper.WriteObjectToFile(path, obj);
-//        System.out.println("After add value:- " + values[column.getColumnId()].getString() + ":- " + FileHelper.ReadObjectFromFile(path));
-//        System.out.println("====================================================================================================================");
     }
 
     private void checkUnique(boolean repeatableRead, TransactionMap<SearchRow,Value> map, SearchRow row,
@@ -242,22 +242,22 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public void remove(SessionLocal session, Row row) {
+        MVPrimaryIndex pindex = this.mvTable.getPrimaryIndex();
+        long index = row.getKey();
         String path = FileHelper.generateFileName(table.getName(), this.columns);
         HashBitObject obj = FileHelper.ReadObjectFromFile(path);
-        long index = row.getKey();
+
         //TODO: This works only for column array with one column, Update that
-//        System.out.println("====================================================================================================================");
-//        System.out.println("Previous bitmap before remove:- " + obj);
-        obj.remove(index, false);
+        
+        obj.remove(pindex.getIndexForKey(index), false);
         FileHelper.WriteObjectToFile(path, obj);
 //        System.out.println("After remove index:- " + index + ":- " + FileHelper.ReadObjectFromFile(path));
-//        System.out.println("====================================================================================================================");
     }
 
     @Override
     public void update(SessionLocal session, Row oldRow, Row newRow) {
         Value[] newValues = newRow.getValueList();
-        Value[] oldValues = newRow.getValueList();
+        Value[] oldValues = oldRow.getValueList();
         String path = FileHelper.generateFileName(table.getName(), this.columns);
         HashBitObject obj = FileHelper.ReadObjectFromFile(path);
         long index = oldRow.getKey();

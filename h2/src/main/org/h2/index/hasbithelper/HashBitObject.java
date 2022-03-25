@@ -47,9 +47,9 @@ public class HashBitObject implements Serializable {
                 }
             } else {
                 if (key == hash) {
-                    keyValue.add(((int) index) - 1, true);
+                    keyValue.add(((int) index), true);
                 } else {
-                    keyValue.add(((int) index) - 1, false);
+                    keyValue.add(((int) index), false);
                 }
             }
         }
@@ -80,9 +80,9 @@ public class HashBitObject implements Serializable {
             //TODO: Update this code to get the previous one
             ArrayList<Boolean> keyValue = mapElement.getValue();
             if (key == newValueHash) {
-                keyValue.set(((int) index) - 1, true);
+                keyValue.set(((int) index), true);
             } else {
-                keyValue.set(((int) index) - 1, false);
+                keyValue.set(((int) index), false);
             }
         }
     }
@@ -100,9 +100,9 @@ public class HashBitObject implements Serializable {
             ArrayList<Boolean> keyValue = (ArrayList<Boolean>) mapElement.getValue();
 //            TODO: We need to add false if we keep bitmap in primary index order, in that case we need to maintain a deletedIndex array and filter using it for query operation. But it will affect the update methods. So we need to to overwrite methods
             if (isDelete) {
-                keyValue.set(((int) index) - 1, false);
+                keyValue.set(((int) index), false);
             } else {
-                keyValue.remove(((int) index) - 1);
+                keyValue.remove(((int) index));
             }
         }
         length--;
