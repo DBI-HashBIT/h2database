@@ -9,11 +9,13 @@ public class HashBitObject implements Serializable {
     // set to a power of 2 for uniform distribution
     private int noOfBuckets;
 
-    public HashMap<Integer, ArrayList<Boolean>> hashBitValues;
-    public int length;
+    private final HashMap<Integer, ArrayList<Boolean>> hashBitValues;
+    private final List<Long> rowKeys;
+    private int length;
 
     public HashBitObject() {
         this.hashBitValues = new HashMap<>();
+        this.rowKeys = new ArrayList<>();
         length = 0;
     }
 
@@ -23,40 +25,82 @@ public class HashBitObject implements Serializable {
         System.out.println("HashBitObject created with " + noOfBuckets + " buckets");
     }
 
-    public void add(String value) {
-        add(value, -100);
-    }
-
-    public void add(String value, long index) {
+    public synchronized void add(String value, long rowKey) {
         if (value == null) {
             value = "NULL";
         }
-        int hash = hash(value);
+        int hashKey = hash(value);
 
-        if (!hashBitValues.containsKey(hash)) {
-            hashBitValues.put(hash, new ArrayList<>(Collections.nCopies(length, false)));
+        if (!hashBitValues.containsKey(hashKey)) {
+            hashBitValues.put(hashKey, new ArrayList<>(Collections.nCopies(length, false)));
         }
-        for (Map.Entry<Integer, ArrayList<Boolean>> mapElement : hashBitValues.entrySet()) {
-            int key = mapElement.getKey();
-            ArrayList<Boolean> keyValue = mapElement.getValue();
-            if (index < 0) {
-                if (key == hash) {
-                    keyValue.add(true);
-                } else {
-                    keyValue.add(false);
-                }
-            } else {
-                if (key == hash) {
-                    keyValue.add(((int) index) - 1, true);
-                } else {
-                    keyValue.add(((int) index) - 1, false);
-                }
+
+        // index in the bitmap array
+        int index;
+        boolean alreadyExists = true;
+        if (!rowKeys.contains(rowKey)) {
+            alreadyExists = false;
+            rowKeys.add(rowKey);
+            Collections.sort(rowKeys);
+        }
+        index = rowKeys.indexOf(rowKey);
+
+        boolean finalAlreadyExists = alreadyExists;
+        hashBitValues.forEach((key, keyValue) -> {
+            // if a value corresponding to rowKey already exists, we remove it
+            // this shifts the elements after the removed element by 1 position to the left
+            if (finalAlreadyExists) {
+                keyValue.remove(index);
             }
-        }
-        length++;
+            if (key == hashKey) {
+                // this shifts the elements after the added element by 1 position to the right
+                keyValue.add(index, true);
+            } else {
+                // this shifts the elements after the added element by 1 position to the right
+                keyValue.add(index, false);
+            }
+        });
+
+        if (!alreadyExists) length++;
         System.out.println("Added " + value);
+        System.out.println("row keys : " + rowKeys);
         System.out.println(this);;
     }
+
+//    public void add(String value) {
+//        add(value, -100);
+//    }
+//
+//    public void add(String value, long index) {
+//        if (value == null) {
+//            value = "NULL";
+//        }
+//        int hash = hash(value);
+//
+//        if (!hashBitValues.containsKey(hash)) {
+//            hashBitValues.put(hash, new ArrayList<>(Collections.nCopies(length, false)));
+//        }
+//        for (Map.Entry<Integer, ArrayList<Boolean>> mapElement : hashBitValues.entrySet()) {
+//            int key = mapElement.getKey();
+//            ArrayList<Boolean> keyValue = mapElement.getValue();
+//            if (index < 0) {
+//                if (key == hash) {
+//                    keyValue.add(true);
+//                } else {
+//                    keyValue.add(false);
+//                }
+//            } else {
+//                if (key == hash) {
+//                    keyValue.add(((int) index) - 1, true);
+//                } else {
+//                    keyValue.add(((int) index) - 1, false);
+//                }
+//            }
+//        }
+//        length++;
+//        System.out.println("Added " + value);
+//        System.out.println(this);;
+//    }
 
     public void update(long index, String newValue, String oldValue) {
         if (oldValue == null) {
@@ -143,7 +187,9 @@ public class HashBitObject implements Serializable {
     }
 
     private int hash(String key) {
-        return (key.hashCode() & 0x7fffffff) % noOfBuckets;
+        int hash = (key.hashCode() & 0x7fffffff) % noOfBuckets;
+        System.out.println("Hash for " + key + " is " + hash);
+        return hash;
     }
 
 }
