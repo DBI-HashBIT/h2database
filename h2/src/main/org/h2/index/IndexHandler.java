@@ -62,11 +62,12 @@ public class IndexHandler {
                 columnName = column.getName();
                 table = column.getTable();
                 columnIndex = table.getIndexForColumn(column, false, false);
-                if (comparison.getRight() instanceof ValueExpression
-                        && comparison.getCompareType() ==  Comparison.EQUAL
-                        && columnIndex .indexType.isHashbit()
-                        && columnIndex.indexColumns.length == 1) {
-                    return getBitMapIndices(column, table, comparison.getRight().getValue(session).getString());
+                if (columnIndex != null
+                    && comparison.getRight() instanceof ValueExpression
+                    && comparison.getCompareType() ==  Comparison.EQUAL
+                    && columnIndex .indexType.isHashbit()
+                    && columnIndex.indexColumns.length == 1) {
+                        return getBitMapIndices(column, table, comparison.getRight().getValue(session).getString());
                 }
             }
         }
