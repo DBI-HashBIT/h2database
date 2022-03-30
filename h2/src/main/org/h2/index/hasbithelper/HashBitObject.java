@@ -11,6 +11,9 @@ public class HashBitObject implements Serializable {
 
     public HashMap<Integer, ArrayList<Boolean>> hashBitValues;
     public int length;
+    // Folder name
+    private String tableName;
+    private String columnName;
 
     public HashBitObject() {
         this.hashBitValues = new HashMap<>();
@@ -21,6 +24,13 @@ public class HashBitObject implements Serializable {
         this();
         this.noOfBuckets = noOfBuckets;
         System.out.println("HashBitObject created with " + noOfBuckets + " buckets");
+    }
+
+    public HashBitObject(int noOfBuckets, String tableName, String columnName) {
+        this();
+        this.noOfBuckets = noOfBuckets;
+        this.tableName = tableName;
+        this.columnName = columnName;
     }
 
     public void add(String value) {
@@ -55,7 +65,8 @@ public class HashBitObject implements Serializable {
         }
         length++;
         System.out.println("Added " + value);
-        System.out.println(this);;
+        System.out.println(this);
+        FileHelper.WriteObjectToFile(getFilePath()+".txt", this);
     }
 
     public void update(long index, String newValue, String oldValue) {
@@ -85,6 +96,7 @@ public class HashBitObject implements Serializable {
                 keyValue.set(((int) index), false);
             }
         }
+        FileHelper.WriteObjectToFile(getFilePath(), this);
     }
 
     public void remove(long index) {
@@ -106,6 +118,7 @@ public class HashBitObject implements Serializable {
             }
         }
         length--;
+        FileHelper.WriteObjectToFile(getFilePath(), this);
     }
 
     public int getSize() {
@@ -146,4 +159,15 @@ public class HashBitObject implements Serializable {
         return (key.hashCode() & 0x7fffffff) % noOfBuckets;
     }
 
+    private Set<Integer> getBucketKeys() {
+        return this.hashBitValues.keySet();
+    }
+
+    public void deleteFiles() {
+        FileHelper.deleteFiles(getFilePath());
+    }
+
+    public String getFilePath() {
+        return tableName+"_"+columnName;
+    }
 }
