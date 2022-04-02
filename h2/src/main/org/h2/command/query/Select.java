@@ -541,8 +541,8 @@ public class Select extends Query {
             }
             System.out.println("Continue");
             setCurrentRowNumber(rowNumber + 1);
-            conditionMetvalue = generatedBitmap != null || isConditionMet();
-            if (isForUpdate ? isConditionMetForUpdate(generatedBitmap != null) : conditionMetvalue) {
+            conditionMetvalue = isConditionMet();
+            if (isForUpdate ? isConditionMetForUpdate(false) : conditionMetvalue) {
                 rowNumber++;
                 groupData.nextSource();
                 updateAgg(columnCount, stage);
@@ -1868,9 +1868,9 @@ public class Select extends Query {
                     continue;
                 }
                 System.out.println("Continue : 2");
-                conditionMetValue = (generatedBitmap != null) || isConditionMet();
+                conditionMetValue = isConditionMet();
                 // This method may lock rows
-                if (forUpdate ? isConditionMetForUpdate(generatedBitmap != null) : conditionMetValue) {
+                if (forUpdate ? isConditionMetForUpdate(false) : conditionMetValue) {
                     ++rowNumber;
                     Value[] row = new Value[columnCount];
                     for (int i = 0; i < columnCount; i++) {
