@@ -88,6 +88,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         FileHelper.addNewHashObject(table.getName(), this.columns, numberOfBuckets);
     }
 
+    //TODO: Throw an error
     @Override
     public void addRowsToBuffer(List<Row> rows, String bufferName) {
         MVMap<SearchRow, Value> map = openMap(bufferName);
@@ -98,6 +99,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         }
     }
 
+    //TODO: Remove this part
     private static final class Source {
 
         private final Iterator<SearchRow> iterator;
@@ -137,6 +139,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         }
     }
 
+    //TODO: Throw an error
     @Override
     public void addBufferedRows(List<String> bufferNames) {
         int buffersCount = bufferNames.size();
@@ -172,6 +175,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         }
     }
 
+    //TODO: Remove this method
     private MVMap<SearchRow, Value> openMap(String mapName) {
         RowDataType keyType = getRowFactory().getRowDataType();
         MVMap.Builder<SearchRow, Value> builder = new MVMap.Builder<SearchRow, Value>()
@@ -204,6 +208,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         FileHelper.WriteObjectToFile(path, obj);
   }
 
+    //TODO: Remove
     private void checkUnique(boolean repeatableRead, TransactionMap<SearchRow,Value> map, SearchRow row,
                              long newKey) {
         RowFactory uniqueRowFactory = getUniqueRowFactory();
@@ -259,6 +264,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         System.out.println("After update index:- " + index + ":- " + FileHelper.ReadObjectFromFile(path));
     }
 
+    //TODO: Remove
     private boolean rowsAreEqual(SearchRow rowOne, SearchRow rowTwo) {
         if (rowOne == rowTwo) {
             return true;
@@ -275,15 +281,17 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public Cursor find(SessionLocal session, SearchRow first, SearchRow last) {
-        return find(session, first, false, last);
+//        return find(session, first, false, last);
+        return null;
     }
 
-    private Cursor find(SessionLocal session, SearchRow first, boolean bigger, SearchRow last) {
-        SearchRow min = convertToKey(first, bigger);
-        SearchRow max = convertToKey(last, Boolean.TRUE);
-        return new MVStoreCursor(session, getTransactionMap(session).keyIterator(min, max), mvTable);
-    }
+//    private Cursor find(SessionLocal session, SearchRow first, boolean bigger, SearchRow last) {
+//        SearchRow min = convertToKey(first, bigger);
+//        SearchRow max = convertToKey(last, Boolean.TRUE);
+//        return new MVStoreCursor(session, getTransactionMap(session).keyIterator(min, max), mvTable);
+//    }
 
+    //TODO: Remove
     private SearchRow convertToKey(SearchRow r, Boolean minMax) {
         if (r == null) {
             return null;
@@ -302,6 +310,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         return mvTable;
     }
 
+    //TODO: Remove or Implement
     @Override
     public double getCost(SessionLocal session, int[] masks,
                           TableFilter[] filters, int filter, SortOrder sortOrder,
@@ -314,12 +323,14 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         }
     }
 
+    //TODO: Implement
     @Override
     public void remove(SessionLocal session) {
         //TODO: Remove the index file
         System.out.println("Remove the Index File");
     }
 
+    //TODO: Implement
     @Override
     public void truncate(SessionLocal session) {
         FileHelper.addNewHashObject(table.getName(), this.columns, numberOfBuckets);
@@ -333,13 +344,14 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
     @Override
     public Cursor findFirstOrLast(SessionLocal session, boolean first) {
 //        System.out.println("Query Check - The method findFirstOrLast is called, Boolwan first :-  " + first);
-        TransactionMap.TMIterator<SearchRow, Value, SearchRow> iter = getTransactionMap(session).keyIterator(null, !first);
-        for (SearchRow key; (key = iter.fetchNext()) != null;) {
-            if (key.getValue(columnIds[0]) != ValueNull.INSTANCE) {
-                return new SingleRowCursor(mvTable.getRow(session, key.getKey()));
-            }
-        }
-        return new SingleRowCursor(null);
+//        TransactionMap.TMIterator<SearchRow, Value, SearchRow> iter = getTransactionMap(session).keyIterator(null, !first);
+//        for (SearchRow key; (key = iter.fetchNext()) != null;) {
+//            if (key.getValue(columnIds[0]) != ValueNull.INSTANCE) {
+//                return new SingleRowCursor(mvTable.getRow(session, key.getKey()));
+//            }
+//        }
+//        return new SingleRowCursor(null);
+        return null;
     }
 
     @Override
@@ -384,7 +396,8 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public Cursor findNext(SessionLocal session, SearchRow higherThan, SearchRow last) {
-        return find(session, higherThan, true, last);
+//        return find(session, higherThan, true, last);
+        return null;
     }
 
     /**
@@ -393,6 +406,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
      * @param session the session
      * @return the map
      */
+    //TODO: Remove
     public TransactionMap<SearchRow,Value> getTransactionMap(SessionLocal session) {
         if (session == null) {
             return dataMap;
@@ -401,56 +415,58 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         return dataMap.getInstance(t);
     }
 
+    //TODO: return null ? Remove
     @Override
     public MVMap<SearchRow, VersionedValue<Value>> getMVMap() {
         return dataMap.map;
     }
 
+//    TODO: //REMOVE
     /**
      * A cursor.
      */
-    static final class MVStoreCursor implements Cursor {
-
-        private final SessionLocal             session;
-        private final TransactionMap.TMIterator<SearchRow, Value, SearchRow> it;
-        private final MVTable             mvTable;
-        private       SearchRow           current;
-        private       Row                 row;
-
-        MVStoreCursor(SessionLocal session, TransactionMap.TMIterator<SearchRow, Value, SearchRow> it, MVTable mvTable) {
-            this.session = session;
-            this.it = it;
-            this.mvTable = mvTable;
-        }
-
-        @Override
-        public Row get() {
-            if (row == null) {
-                SearchRow r = getSearchRow();
-                if (r != null) {
-                    row = mvTable.getRow(session, r.getKey());
-                }
-            }
-            return row;
-        }
-
-        @Override
-        public SearchRow getSearchRow() {
-            return current;
-        }
-
-        @Override
-        public boolean next() {
-            current = it.fetchNext();
-            row = null;
-            return current != null;
-        }
-
-        @Override
-        public boolean previous() {
-            throw DbException.getUnsupportedException("previous");
-        }
-    }
+//    static final class MVStoreCursor implements Cursor {
+//
+//        private final SessionLocal             session;
+//        private final TransactionMap.TMIterator<SearchRow, Value, SearchRow> it;
+//        private final MVTable             mvTable;
+//        private       SearchRow           current;
+//        private       Row                 row;
+//
+//        MVStoreCursor(SessionLocal session, TransactionMap.TMIterator<SearchRow, Value, SearchRow> it, MVTable mvTable) {
+//            this.session = session;
+//            this.it = it;
+//            this.mvTable = mvTable;
+//        }
+//
+//        @Override
+//        public Row get() {
+//            if (row == null) {
+//                SearchRow r = getSearchRow();
+//                if (r != null) {
+//                    row = mvTable.getRow(session, r.getKey());
+//                }
+//            }
+//            return row;
+//        }
+//
+//        @Override
+//        public SearchRow getSearchRow() {
+//            return current;
+//        }
+//
+//        @Override
+//        public boolean next() {
+//            current = it.fetchNext();
+//            row = null;
+//            return current != null;
+//        }
+//
+//        @Override
+//        public boolean previous() {
+//            throw DbException.getUnsupportedException("previous");
+//        }
+//    }
 
     public void rebuildIndex(SessionLocal session) {
         //TODO: Impplement this methos for all table. Currently, its implemented for MVTables
@@ -500,6 +516,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 //        System.out.println("===============================================================================================");
     }
 
+    //TODO: Remove
     public void addSchemaObject() {
         
     }
