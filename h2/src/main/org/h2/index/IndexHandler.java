@@ -33,8 +33,8 @@ public class IndexHandler {
 //        return integerArray;
 //    }
 
-    private static ArrayList<Integer> getBitMapIndices(Column column, Table table, String value) {
-        ArrayList<Boolean> bitmapArray = HashBitObject.getBitmapArray(value);
+    private static ArrayList<Integer> getBitMapIndices(HashBitIndex hashBitIndex, String value) {
+        ArrayList<Boolean> bitmapArray = hashBitIndex.getBitMapArray(value);
         if (bitmapArray == null) {
             return null;
         }

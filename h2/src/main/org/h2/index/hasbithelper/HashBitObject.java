@@ -7,10 +7,10 @@ public class HashBitObject implements Serializable {
     public static final int DEFAULT_NUMBER_OF_BUCKETS = 256;
 
     // set to a power of 2 for uniform distribution
-    private static int noOfBuckets;
+    private int noOfBuckets;
 
-    public static HashMap<Integer, ArrayList<Boolean>> hashBitValues;
-    public static int length;
+    public HashMap<Integer, ArrayList<Boolean>> hashBitValues;
+    public int length;
     // Folder name
     private String tableName;
     private String columnName;
@@ -125,7 +125,7 @@ public class HashBitObject implements Serializable {
         return length;
     }
 
-    public static ArrayList<Boolean> getBitmapArray(String key) {
+    public ArrayList<Boolean> getBitmapArray(String key) {
         int hash = hash(key);
         if (hashBitValues.containsKey(hash)) {
             return hashBitValues.get(hash);
@@ -155,7 +155,7 @@ public class HashBitObject implements Serializable {
         return string.toString();
     }
 
-    private static int hash(String key) {
+    private int hash(String key) {
         return (key.hashCode() & 0x7fffffff) % noOfBuckets;
     }
 
