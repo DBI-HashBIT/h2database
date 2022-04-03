@@ -399,6 +399,10 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 //        System.out.println("===============================================================================================");
     }
 
+    public ArrayList<Boolean> getBitMapArray(String value){
+        return hashBitObject.getBitmapArray(value);
+    }
+
     //TODO: Remove
     public void addSchemaObject() {
         
