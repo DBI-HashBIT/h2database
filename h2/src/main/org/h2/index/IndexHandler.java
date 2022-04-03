@@ -34,9 +34,7 @@ public class IndexHandler {
 //    }
 
     private static ArrayList<Integer> getBitMapIndices(Column column, Table table, String value) {
-        ArrayList<Boolean> bitmapArray = FileHelper.ReadObjectFromFile(FileHelper
-                .generateFileName(table.getName(), new Column[]{column}))
-                .getBitmapArray(value);
+        ArrayList<Boolean> bitmapArray = HashBitObject.getBitmapArray(value);
         if (bitmapArray == null) {
             return null;
         }
