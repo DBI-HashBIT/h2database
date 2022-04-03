@@ -5,8 +5,8 @@ import org.h2.table.Column;
 import java.io.*;
 
 public class FileHelper {
-//    private static String directoryName = "D:\\Acedemic\\UOM\\Semesters\\Semester 8\\Database Internals\\Project\\Forked-H2Database\\h2database\\h2\\src\\main\\org\\h2\\index\\hasbithelper";
-    private static String directoryName = "/home/ruchin/WorkSpace/Campus/Semester 8/DBI/Group_Assignment";
+    private static String directoryName = "D:\\Acedemic\\UOM\\Semesters\\Semester 8\\Database Internals\\Project\\Forked-H2Database\\h2database\\h2\\src\\main\\org\\h2\\index\\hasbithelper";
+//    private static String directoryName = "/home/ruchin/WorkSpace/Campus/Semester 8/DBI/Group_Assignment";
     private static String separator = "/";
 
     public static void WriteObjectToFile(String filepath, HashBitObject serObj) {

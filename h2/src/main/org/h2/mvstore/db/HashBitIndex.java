@@ -112,19 +112,10 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public void add(SessionLocal session, Row row) {
-
-        MVPrimaryIndex pindex = this.mvTable.getPrimaryIndex();
-        long index = row.getKey();
-
+        long rowKey = row.getKey();
         Value[] values = row.getValueList();
-//        String path = FileHelper.generateFileName(table.getName(), this.columns);
         Column column = this.columns[0];
-        hashBitObject.add(values[column.getColumnId()].getString(), pindex.getIndexForKey(index));
-//        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
-//        Column column = this.columns[0];
-////
-//        obj.add(values[column.getColumnId()].getString(), pindex.getIndexForKey(index));
-//        FileHelper.WriteObjectToFile(path, obj);
+        hashBitObject.add(values[column.getColumnId()].getString(), rowKey);
     }
 
     private void checkUnique(boolean repeatableRead, TransactionMap<SearchRow,Value> map, SearchRow row,
@@ -134,34 +125,18 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public void remove(SessionLocal session, Row row) {
-        MVPrimaryIndex pindex = this.mvTable.getPrimaryIndex();
-        long index = row.getKey();
-        hashBitObject.remove(pindex.getIndexForKey(index), false);
-//        String path = FileHelper.generateFileName(table.getName(), this.columns);
-//        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
-
-        //TODO: This works only for column array with one column, Update that
-
-//        obj.remove(pindex.getIndexForKey(index), false);
-//        FileHelper.WriteObjectToFile(path, obj);
-        System.out.println("After remove index:- " + index + ":- " + hashBitObject);
+        long rowKey = row.getKey();
+        hashBitObject.remove(rowKey);
     }
 
     @Override
     public void update(SessionLocal session, Row oldRow, Row newRow) {
         Value[] newValues = newRow.getValueList();
         Value[] oldValues = oldRow.getValueList();
-//        String path = FileHelper.generateFileName(table.getName(), this.columns);
-//        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
-        long index = oldRow.getKey();
+        long rowKey = oldRow.getKey();
         Column column = this.columns[0];
-        //TODO: This works only for column array with one column, Update that
-//        System.out.println("====================================================================================================================");
-//        System.out.println("Previous bitmap before update:- " + obj);
-        hashBitObject.update(index, newValues[column.getColumnId()].getString(), oldValues[column.getColumnId()].getString());
-//        FileHelper.WriteObjectToFile(path, obj);
-        System.out.println("After update index:- " + index + ":- " + hashBitObject);
-//        System.out.println("====================================================================================================================");
+        hashBitObject.remove(rowKey);
+        hashBitObject.add(newValues[column.getColumnId()].getString(), rowKey);
     }
 
     //TODO: Remove
@@ -397,6 +372,10 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 //        System.out.println("Rebuilt hashbit indexes of Table - " + table.getName() + " and Column - " + this.columns[0].getName());
 //        System.out.println(hashBitObject.toString());
 //        System.out.println("===============================================================================================");
+    }
+
+    public ArrayList<Boolean> getBitMapArray(String value){
+        return hashBitObject.getBitmapArray(value);
     }
 
     //TODO: Remove

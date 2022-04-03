@@ -14,6 +14,8 @@ public class HashBitObject implements Serializable {
     private final HashMap<Integer, ArrayList<Boolean>> hashBitValues;
     private final List<Long> rowKeys;
     private int length;
+    private String tableName;
+    private String columnName;
 
     public HashBitObject() {
         this.hashBitValues = new HashMap<>();
@@ -21,13 +23,17 @@ public class HashBitObject implements Serializable {
         length = 0;
     }
 
-
     public HashBitObject(int noOfBuckets) {
         this();
         this.noOfBuckets = noOfBuckets;
         System.out.println("HashBitObject created with " + noOfBuckets + " buckets");
     }
 
+    public HashBitObject(int noOfBuckets, String tableName, String columnName) {
+        this(noOfBuckets);
+        this.tableName = tableName;
+        this.columnName = columnName;
+    }
 
     public void add(String value, long rowKey) {
         if (value == null) {
@@ -69,6 +75,7 @@ public class HashBitObject implements Serializable {
 //        System.out.println("Added " + value);
 //        System.out.println("row keys : " + rowKeys);
 //        System.out.println(this);;
+        FileHelper.WriteObjectToFile(getFilePath(), this);
     }
 
 
@@ -86,6 +93,7 @@ public class HashBitObject implements Serializable {
 //        System.out.println("Removed");
 //        System.out.println("row keys : " + rowKeys);
 //        System.out.println(this);;
+        FileHelper.WriteObjectToFile(getFilePath(), this);
     }
 
 
@@ -125,10 +133,16 @@ public class HashBitObject implements Serializable {
         return string.toString();
     }
 
+    public void deleteFiles() {
+        FileHelper.deleteFiles(getFilePath());
+    }
+
+    private String getFilePath() {
+        return tableName + "_" + columnName + ".txt";
+    }
 
     private int hash(String key) {
         int hash = (key.hashCode() & 0x7fffffff) % noOfBuckets;
-//        System.out.println("Hash for " + key + " is " + hash);
         return hash;
     }
 
