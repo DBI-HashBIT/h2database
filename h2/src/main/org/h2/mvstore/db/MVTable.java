@@ -874,6 +874,10 @@ public class MVTable extends TableBase {
         return containsLargeObject;
     }
 
+    public MVPrimaryIndex getPrimaryIndex() {
+        return primaryIndex;
+    }
+
     @Override
     public Column getRowIdColumn() {
         if (rowIdColumn == null) {

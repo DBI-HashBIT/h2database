@@ -78,6 +78,15 @@ public class MVPrimaryIndex extends MVIndex<Long, SearchRow> {
         return mainIndexColumn;
     }
 
+    public List<Long> getIndexList() {
+        return dataMap.map.keyList();
+    }
+
+    public long getIndexForKey(Long key) {
+        return dataMap.map.getKeyIndex(key);
+    }
+
+
     @Override
     public void close(SessionLocal session) {
         // ok
