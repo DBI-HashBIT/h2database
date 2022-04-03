@@ -66,9 +66,9 @@ public class HashBitObject implements Serializable {
         });
 
         if (!alreadyExists) length++;
-        System.out.println("Added " + value);
-        System.out.println("row keys : " + rowKeys);
-        System.out.println(this);;
+//        System.out.println("Added " + value);
+//        System.out.println("row keys : " + rowKeys);
+//        System.out.println(this);;
     }
 
 
@@ -83,9 +83,9 @@ public class HashBitObject implements Serializable {
         });
         rowKeys.remove(index);
         length--;
-        System.out.println("Removed");
-        System.out.println("row keys : " + rowKeys);
-        System.out.println(this);;
+//        System.out.println("Removed");
+//        System.out.println("row keys : " + rowKeys);
+//        System.out.println(this);;
     }
 
 
@@ -128,7 +128,7 @@ public class HashBitObject implements Serializable {
 
     private int hash(String key) {
         int hash = (key.hashCode() & 0x7fffffff) % noOfBuckets;
-        System.out.println("Hash for " + key + " is " + hash);
+//        System.out.println("Hash for " + key + " is " + hash);
         return hash;
     }
 
