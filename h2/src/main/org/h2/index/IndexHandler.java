@@ -11,6 +11,7 @@ import org.h2.expression.condition.ConditionAndOr;
 import org.h2.expression.condition.ConditionAndOrN;
 import org.h2.index.hasbithelper.FileHelper;
 import org.h2.index.hasbithelper.HashBitObject;
+import org.h2.mvstore.db.HashBitIndex;
 import org.h2.mvstore.tx.TransactionMap;
 import org.h2.result.SearchRow;
 import org.h2.table.Column;
@@ -65,7 +66,7 @@ public class IndexHandler {
                     && comparison.getCompareType() ==  Comparison.EQUAL
                     && columnIndex .indexType.isHashbit()
                     && columnIndex.indexColumns.length == 1) {
-                        return getBitMapIndices(column, table, comparison.getRight().getValue(session).getString());
+                        return getBitMapIndices((HashBitIndex) columnIndex, comparison.getRight().getValue(session).getString());
                 }
             }
         }
