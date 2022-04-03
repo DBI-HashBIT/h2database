@@ -33,10 +33,8 @@ public class IndexHandler {
 //        return integerArray;
 //    }
 
-    private static ArrayList<Integer> getBitMapIndices(Column column, Table table, String value) {
-        ArrayList<Boolean> bitmapArray = FileHelper.ReadObjectFromFile(FileHelper
-                .generateFileName(table.getName(), new Column[]{column}))
-                .getBitmapArray(value);
+    private static ArrayList<Integer> getBitMapIndices(HashBitIndex hashBitIndex, String value) {
+        ArrayList<Boolean> bitmapArray = hashBitIndex.getBitMapArray(value);
         if (bitmapArray == null) {
             return null;
         }
