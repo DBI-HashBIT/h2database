@@ -64,8 +64,8 @@ public class HashBitObject implements Serializable {
             }
         }
         length++;
-        System.out.println("Added " + value);
-        System.out.println(this);
+        //System.out.println("Added " + value);
+        //System.out.println(this);
         FileHelper.WriteObjectToFile(getFilePath()+".txt", this);
     }
 
