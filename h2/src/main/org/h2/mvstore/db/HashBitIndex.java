@@ -10,16 +10,13 @@ import org.h2.engine.SessionLocal;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.IndexType;
-import org.h2.index.SingleRowCursor;
 import org.h2.index.hasbithelper.FileHelper;
 import org.h2.index.hasbithelper.HashBitObject;
 import org.h2.message.DbException;
 import org.h2.mvstore.MVMap;
-import org.h2.mvstore.MVStore;
 import org.h2.mvstore.MVStoreException;
 import org.h2.mvstore.tx.Transaction;
 import org.h2.mvstore.tx.TransactionMap;
-import org.h2.mvstore.tx.TransactionMap.TMIterator;
 import org.h2.mvstore.type.DataType;
 import org.h2.result.Row;
 import org.h2.result.RowFactory;
@@ -41,6 +38,7 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
     private final MVTable mvTable;
     private final TransactionMap<SearchRow, Value> dataMap;
     private final int numberOfBuckets;
+    private HashBitObject hashBitObject;
 
     public HashBitIndex(Database db, MVTable table, int id, String indexName,
                         IndexColumn[] columns, int uniqueColumnCount, IndexType indexType) {
@@ -85,111 +83,26 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         numberOfBuckets = indexType.getNumberOfHashbitBuckets() > 0 ?
                 indexType.getNumberOfHashbitBuckets() : HashBitObject.DEFAULT_NUMBER_OF_BUCKETS;
 
-        FileHelper.addNewHashObject(table.getName(), this.columns, numberOfBuckets);
+        if (FileHelper.isFileExists(table.getName())) {
+            this.hashBitObject = FileHelper.ReadObjectFromFile(table.getName()+ "_" +columns[0]+".txt");
+        } else {
+            this.hashBitObject = new HashBitObject(numberOfBuckets, table.getName(), columns[0].columnName);
+        }
+//        FileHelper.addNewHashObject(table.getName(), this.columns, numberOfBuckets);
     }
 
-    //TODO: Throw an error
     @Override
     public void addRowsToBuffer(List<Row> rows, String bufferName) {
-        MVMap<SearchRow, Value> map = openMap(bufferName);
-        for (Row row : rows) {
-            SearchRow r = getRowFactory().createRow();
-            r.copyFrom(row);
-            map.append(r, ValueNull.INSTANCE);
-        }
+        throw DbException.getInternalError();
     }
 
-    //TODO: Remove this part
-    private static final class Source {
-
-        private final Iterator<SearchRow> iterator;
-
-        SearchRow currentRowData;
-
-        public Source(Iterator<SearchRow> iterator) {
-            assert iterator.hasNext();
-            this.iterator = iterator;
-            this.currentRowData = iterator.next();
-        }
-
-        public boolean hasNext() {
-            boolean result = iterator.hasNext();
-            if (result) {
-                currentRowData = iterator.next();
-            }
-            return result;
-        }
-
-        public SearchRow next() {
-            return currentRowData;
-        }
-
-        static final class Comparator implements java.util.Comparator<Source> {
-
-            private final DataType<SearchRow> type;
-
-            public Comparator(DataType<SearchRow> type) {
-                this.type = type;
-            }
-
-            @Override
-            public int compare(Source one, Source two) {
-                return type.compare(one.currentRowData, two.currentRowData);
-            }
-        }
-    }
-
-    //TODO: Throw an error
     @Override
     public void addBufferedRows(List<String> bufferNames) {
-        int buffersCount = bufferNames.size();
-        Queue<Source> queue = new PriorityQueue<>(buffersCount,
-                new Source.Comparator(getRowFactory().getRowDataType()));
-        for (String bufferName : bufferNames) {
-            Iterator<SearchRow> iter = openMap(bufferName).keyIterator(null);
-            if (iter.hasNext()) {
-                queue.offer(new Source(iter));
-            }
-        }
-
-        try {
-            while (!queue.isEmpty()) {
-                Source s = queue.poll();
-                SearchRow row = s.next();
-
-                if (uniqueColumnColumn > 0 && !mayHaveNullDuplicates(row)) {
-                    checkUnique(false, dataMap, row, Long.MIN_VALUE);
-                }
-
-                dataMap.putCommitted(row, ValueNull.INSTANCE);
-
-                if (s.hasNext()) {
-                    queue.offer(s);
-                }
-            }
-        } finally {
-            MVStore mvStore = database.getStore().getMvStore();
-            for (String tempMapName : bufferNames) {
-                mvStore.removeMap(tempMapName);
-            }
-        }
+        throw DbException.getInternalError();
     }
 
-    //TODO: Remove this method
     private MVMap<SearchRow, Value> openMap(String mapName) {
-        RowDataType keyType = getRowFactory().getRowDataType();
-        MVMap.Builder<SearchRow, Value> builder = new MVMap.Builder<SearchRow, Value>()
-                .singleWriter()
-                .keyType(keyType)
-                .valueType(NullValueDataType.INSTANCE);
-        MVMap<SearchRow, Value> map = database.getStore().getMvStore()
-                .openMap(mapName, builder);
-        if (!keyType.equals(map.getKeyType())) {
-            throw DbException.getInternalError(
-                    "Incompatible key type, expected " + keyType + " but got "
-                            + map.getKeyType() + " for map " + mapName);
-        }
-        return map;
+        throw DbException.getInternalError();
     }
 
     @Override
@@ -199,96 +112,61 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public void add(SessionLocal session, Row row) {
+
+        MVPrimaryIndex pindex = this.mvTable.getPrimaryIndex();
+        long index = row.getKey();
+
         Value[] values = row.getValueList();
-        String path = FileHelper.generateFileName(table.getName(), this.columns);
-        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+//        String path = FileHelper.generateFileName(table.getName(), this.columns);
         Column column = this.columns[0];
-        //TODO: This works only for column array with one column, Update that
-//        System.out.println("====================================================================================================================");
-//        System.out.println("Previous bitmap:- " + obj);
-        obj.add(values[column.getColumnId()].getString(), row.getKey());
-        FileHelper.WriteObjectToFile(path, obj);
-//        System.out.println("After add value:- " + values[column.getColumnId()].getString() + ":- " + FileHelper.ReadObjectFromFile(path));
-//        System.out.println("====================================================================================================================");
+        hashBitObject.add(values[column.getColumnId()].getString(), pindex.getIndexForKey(index));
+//        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+//        Column column = this.columns[0];
+////
+//        obj.add(values[column.getColumnId()].getString(), pindex.getIndexForKey(index));
+//        FileHelper.WriteObjectToFile(path, obj);
     }
 
-    //TODO: Remove
     private void checkUnique(boolean repeatableRead, TransactionMap<SearchRow,Value> map, SearchRow row,
                              long newKey) {
-        RowFactory uniqueRowFactory = getUniqueRowFactory();
-        SearchRow from = uniqueRowFactory.createRow();
-        from.copyFrom(row);
-        from.setKey(Long.MIN_VALUE);
-        SearchRow to = uniqueRowFactory.createRow();
-        to.copyFrom(row);
-        to.setKey(Long.MAX_VALUE);
-        if (repeatableRead) {
-            // In order to guarantee repeatable reads, snapshot taken at the beginning of the statement or transaction
-            // need to be checked additionally, because existence of the key should be accounted for,
-            // even if since then, it was already deleted by another (possibly committed) transaction.
-            TransactionMap.TMIterator<SearchRow, Value, SearchRow> it = map.keyIterator(from, to);
-            for (SearchRow k; (k = it.fetchNext()) != null;) {
-                if (newKey != k.getKey() && !map.isDeletedByCurrentTransaction(k)) {
-                    throw getDuplicateKeyException(k.toString());
-                }
-            }
-        }
-        TransactionMap.TMIterator<SearchRow, Value, SearchRow> it = map.keyIteratorUncommitted(from, to);
-        for (SearchRow k; (k = it.fetchNext()) != null;) {
-            if (newKey != k.getKey()) {
-                if (map.getImmediate(k) != null) {
-                    // committed
-                    throw getDuplicateKeyException(k.toString());
-                }
-                throw DbException.get(ErrorCode.CONCURRENT_UPDATE_1, table.getName());
-            }
-        }
+        throw DbException.getInternalError();
     }
 
     @Override
     public void remove(SessionLocal session, Row row) {
-        String path = FileHelper.generateFileName(table.getName(), this.columns);
-        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+        MVPrimaryIndex pindex = this.mvTable.getPrimaryIndex();
         long index = row.getKey();
+        hashBitObject.remove(pindex.getIndexForKey(index), false);
+//        String path = FileHelper.generateFileName(table.getName(), this.columns);
+//        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+
         //TODO: This works only for column array with one column, Update that
-//        System.out.println("====================================================================================================================");
-//        System.out.println("Previous bitmap before remove:- " + obj);
-        obj.remove(index, false);
-        FileHelper.WriteObjectToFile(path, obj);
-//        System.out.println("After remove index:- " + index + ":- " + FileHelper.ReadObjectFromFile(path));
-//        System.out.println("====================================================================================================================");
+
+//        obj.remove(pindex.getIndexForKey(index), false);
+//        FileHelper.WriteObjectToFile(path, obj);
+        System.out.println("After remove index:- " + index + ":- " + hashBitObject);
     }
 
     @Override
     public void update(SessionLocal session, Row oldRow, Row newRow) {
         Value[] newValues = newRow.getValueList();
-        Value[] oldValues = newRow.getValueList();
-        String path = FileHelper.generateFileName(table.getName(), this.columns);
-        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+        Value[] oldValues = oldRow.getValueList();
+//        String path = FileHelper.generateFileName(table.getName(), this.columns);
+//        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
         long index = oldRow.getKey();
         Column column = this.columns[0];
         //TODO: This works only for column array with one column, Update that
 //        System.out.println("====================================================================================================================");
 //        System.out.println("Previous bitmap before update:- " + obj);
-        obj.update(index, newValues[column.getColumnId()].getString(), oldValues[column.getColumnId()].getString());
-        FileHelper.WriteObjectToFile(path, obj);
-        System.out.println("After update index:- " + index + ":- " + FileHelper.ReadObjectFromFile(path));
+        hashBitObject.update(index, newValues[column.getColumnId()].getString(), oldValues[column.getColumnId()].getString());
+//        FileHelper.WriteObjectToFile(path, obj);
+        System.out.println("After update index:- " + index + ":- " + hashBitObject);
 //        System.out.println("====================================================================================================================");
     }
 
     //TODO: Remove
     private boolean rowsAreEqual(SearchRow rowOne, SearchRow rowTwo) {
-        if (rowOne == rowTwo) {
-            return true;
-        }
-        for (int index : columnIds) {
-            Value v1 = rowOne.getValue(index);
-            Value v2 = rowTwo.getValue(index);
-            if (!Objects.equals(v1, v2)) {
-                return false;
-            }
-        }
-        return rowOne.getKey() == rowTwo.getKey();
+        throw DbException.getInternalError();
     }
 
     @Override
@@ -303,18 +181,8 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 //        return new MVStoreCursor(session, getTransactionMap(session).keyIterator(min, max), mvTable);
 //    }
 
-    //TODO: Remove
     private SearchRow convertToKey(SearchRow r, Boolean minMax) {
-        if (r == null) {
-            return null;
-        }
-
-        SearchRow row = getRowFactory().createRow();
-        row.copyFrom(r);
-        if (minMax != null) {
-            row.setKey(minMax ? Long.MAX_VALUE : Long.MIN_VALUE);
-        }
-        return row;
+        throw DbException.getInternalError();
     }
 
     @Override
@@ -338,14 +206,17 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
     //TODO: Implement
     @Override
     public void remove(SessionLocal session) {
-        //TODO: Remove the index file
+//        FileHelper.deleteFiles();
+        this.hashBitObject.deleteFiles();
         System.out.println("Remove the Index File");
     }
 
     //TODO: Implement
     @Override
     public void truncate(SessionLocal session) {
-        FileHelper.addNewHashObject(table.getName(), this.columns, numberOfBuckets);
+//        FileHelper.addNewHashObject(table.getName(), this.columns, numberOfBuckets);
+        hashBitObject.deleteFiles();
+        hashBitObject = new HashBitObject(numberOfBuckets, table.getName(), columns[0].getName());
     }
 
     @Override
@@ -369,9 +240,9 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
     @Override
     public boolean needRebuild() {
         try {
-            String path = FileHelper.generateFileName(table.getName(), this.columns);
-            HashBitObject obj = FileHelper.ReadObjectFromFile(path);
-            return obj.getSize() == 0;
+//            String path = FileHelper.generateFileName(table.getName(), this.columns);
+//            HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+            return hashBitObject.getSize() == 0;
         } catch (MVStoreException e) {
             throw DbException.get(ErrorCode.OBJECT_CLOSED, e);
         }
@@ -379,17 +250,17 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
 
     @Override
     public long getRowCount(SessionLocal session) {
-        String path = FileHelper.generateFileName(table.getName(), this.columns);
-        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
-        return obj.getSize();
+//        String path = FileHelper.generateFileName(table.getName(), this.columns);
+//        HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+        return hashBitObject.getSize();
     }
 
     @Override
     public long getRowCountApproximation(SessionLocal session) {
         try {
-            String path = FileHelper.generateFileName(table.getName(), this.columns);
-            HashBitObject obj = FileHelper.ReadObjectFromFile(path);
-            return obj.getSize();
+//            String path = FileHelper.generateFileName(table.getName(), this.columns);
+//            HashBitObject obj = FileHelper.ReadObjectFromFile(path);
+            return hashBitObject.getSize();
         } catch (MVStoreException e) {
             throw DbException.get(ErrorCode.OBJECT_CLOSED, e);
         }
@@ -521,11 +392,15 @@ public final class HashBitIndex extends MVIndex<SearchRow, Value> {
         if (remaining != 0) {
             throw DbException.getInternalError("rowcount remaining=" + remaining + ' ' + getName());
         }
-        HashBitObject hashBitObject = FileHelper.ReadObjectFromFile(FileHelper.generateFileName(table.getName(), this.columns));
+//        HashBitObject hashBitObject = FileHelper.ReadObjectFromFile(FileHelper.generateFileName(table.getName(), this.columns));
 //        System.out.println("===============================================================================================");
 //        System.out.println("Rebuilt hashbit indexes of Table - " + table.getName() + " and Column - " + this.columns[0].getName());
 //        System.out.println(hashBitObject.toString());
 //        System.out.println("===============================================================================================");
+    }
+
+    public ArrayList<Boolean> getBitMapArray(String value){
+        return hashBitObject.getBitmapArray(value);
     }
 
     //TODO: Remove

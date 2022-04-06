@@ -5,7 +5,8 @@ import org.h2.table.Column;
 import java.io.*;
 
 public class FileHelper {
-    private static String directoryName = "D:\\Acedemic\\UOM\\Semesters\\Semester 8\\Database Internals\\Project\\Forked-H2Database\\h2database\\h2\\src\\main\\org\\h2\\index\\hasbithelper";
+//    private static String directoryName = "D:\\Acedemic\\UOM\\Semesters\\Semester 8\\Database Internals\\Project\\Forked-H2Database\\h2database\\h2\\src\\main\\org\\h2\\index\\hasbithelper";
+    private static String directoryName = "/home/ruchin/WorkSpace/Campus/Semester 8/DBI/Group_Assignment";
     private static String separator = "/";
 
     public static void WriteObjectToFile(String filepath, HashBitObject serObj) {
@@ -58,5 +59,18 @@ public class FileHelper {
     public static String generateFileName(String tableName, Column[] columns) {
         String columnName = generateColumnNames(columns);
         return tableName + "_" + columnName + ".txt";
+    }
+
+    public static void deleteFiles(String fileName) {
+        File file;
+        String filepath = directoryName + separator + fileName;
+        file = new File(filepath);
+        file.delete();
+    }
+
+    public static Boolean isFileExists(String fileName) {
+        String filepath = directoryName + separator + fileName;
+        File file = new File(filepath);
+        return file.exists();
     }
 }

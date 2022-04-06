@@ -11,6 +11,9 @@ public class HashBitObject implements Serializable {
 
     public HashMap<Integer, ArrayList<Boolean>> hashBitValues;
     public int length;
+    // Folder name
+    private String tableName;
+    private String columnName;
 
     public HashBitObject() {
         this.hashBitValues = new HashMap<>();
@@ -21,6 +24,13 @@ public class HashBitObject implements Serializable {
         this();
         this.noOfBuckets = noOfBuckets;
         System.out.println("HashBitObject created with " + noOfBuckets + " buckets");
+    }
+
+    public HashBitObject(int noOfBuckets, String tableName, String columnName) {
+        this();
+        this.noOfBuckets = noOfBuckets;
+        this.tableName = tableName;
+        this.columnName = columnName;
     }
 
     public void add(String value) {
@@ -47,15 +57,16 @@ public class HashBitObject implements Serializable {
                 }
             } else {
                 if (key == hash) {
-                    keyValue.add(((int) index) - 1, true);
+                    keyValue.add(((int) index), true);
                 } else {
-                    keyValue.add(((int) index) - 1, false);
+                    keyValue.add(((int) index), false);
                 }
             }
         }
         length++;
-        System.out.println("Added " + value);
-        System.out.println(this);;
+        //System.out.println("Added " + value);
+        //System.out.println(this);
+        FileHelper.WriteObjectToFile(getFilePath()+".txt", this);
     }
 
     public void update(long index, String newValue, String oldValue) {
@@ -80,11 +91,12 @@ public class HashBitObject implements Serializable {
             //TODO: Update this code to get the previous one
             ArrayList<Boolean> keyValue = mapElement.getValue();
             if (key == newValueHash) {
-                keyValue.set(((int) index) - 1, true);
+                keyValue.set(((int) index), true);
             } else {
-                keyValue.set(((int) index) - 1, false);
+                keyValue.set(((int) index), false);
             }
         }
+        FileHelper.WriteObjectToFile(getFilePath(), this);
     }
 
     public void remove(long index) {
@@ -100,12 +112,13 @@ public class HashBitObject implements Serializable {
             ArrayList<Boolean> keyValue = (ArrayList<Boolean>) mapElement.getValue();
 //            TODO: We need to add false if we keep bitmap in primary index order, in that case we need to maintain a deletedIndex array and filter using it for query operation. But it will affect the update methods. So we need to to overwrite methods
             if (isDelete) {
-                keyValue.set(((int) index) - 1, false);
+                keyValue.set(((int) index), false);
             } else {
-                keyValue.remove(((int) index) - 1);
+                keyValue.remove(((int) index));
             }
         }
         length--;
+        FileHelper.WriteObjectToFile(getFilePath(), this);
     }
 
     public int getSize() {
@@ -146,4 +159,15 @@ public class HashBitObject implements Serializable {
         return (key.hashCode() & 0x7fffffff) % noOfBuckets;
     }
 
+    private Set<Integer> getBucketKeys() {
+        return this.hashBitValues.keySet();
+    }
+
+    public void deleteFiles() {
+        FileHelper.deleteFiles(getFilePath());
+    }
+
+    public String getFilePath() {
+        return tableName+"_"+columnName;
+    }
 }

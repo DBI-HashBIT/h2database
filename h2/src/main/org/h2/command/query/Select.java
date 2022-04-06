@@ -536,10 +536,10 @@ public class Select extends Query {
             globalRowNumber++;
             bitmapValue = isConditionBitmapTrueForRow(generatedBitmap, globalRowNumber);
             if (!bitmapValue) {
-                System.out.println("Stop");
+//                System.out.println("Stop");
                 continue;
             }
-            System.out.println("Continue");
+//            System.out.println("Continue");
             setCurrentRowNumber(rowNumber + 1);
             conditionMetvalue = isConditionMet();
             if (isForUpdate ? isConditionMetForUpdate(false) : conditionMetvalue) {
@@ -1864,10 +1864,10 @@ public class Select extends Query {
                 setCurrentRowNumber(rowNumber + 1);
                 bitmapValue = isConditionBitmapTrueForRow(generatedBitmap, this.globalRowIndex);
                 if (!bitmapValue) {
-                    System.out.println("Stop : 2");
+//                    System.out.println("Stop : 2");
                     continue;
                 }
-                System.out.println("Continue : 2");
+//                System.out.println("Continue : 2");
                 conditionMetValue = isConditionMet();
                 // This method may lock rows
                 if (forUpdate ? isConditionMetForUpdate(false) : conditionMetValue) {
