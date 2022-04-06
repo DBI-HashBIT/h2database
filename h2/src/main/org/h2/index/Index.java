@@ -15,6 +15,8 @@ import org.h2.engine.DbObject;
 import org.h2.engine.SessionLocal;
 import org.h2.message.DbException;
 import org.h2.message.Trace;
+import org.h2.mvstore.tx.Transaction;
+import org.h2.mvstore.tx.TransactionMap;
 import org.h2.result.Row;
 import org.h2.result.RowFactory;
 import org.h2.result.SearchRow;
@@ -738,6 +740,17 @@ public abstract class Index extends SchemaObject {
 
     public RowFactory getUniqueRowFactory() {
         return uniqueRowFactory;
+    }
+
+    /**
+     * Get the map to store the data.
+     *
+     * @param session the session
+     * @return the map
+     */
+    public TransactionMap<SearchRow,Value> getTransactionMap(SessionLocal session) {
+        //TODO: Handle Null
+        return null;
     }
 
 }

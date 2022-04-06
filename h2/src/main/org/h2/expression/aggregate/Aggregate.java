@@ -257,6 +257,11 @@ public class Aggregate extends AbstractAggregate implements ExpressionWithFlags 
         updateData(session, data, v, null);
     }
 
+    public Column getColumnFromAggregateIndex(int index) {
+        //TODO Handle Errors
+        return args[index].getColumn();
+    }
+
     private void updateData(SessionLocal session, AggregateData data, Value v, Value[] remembered) {
         switch (aggregateType) {
         case COVAR_POP:

@@ -6793,6 +6793,8 @@ public class Parser {
         } else {
             boolean hash = false, primaryKey = false;
             boolean unique = false, spatial = false;
+            boolean hashbit = false;
+            int numberOfHashbitBuckets = 0;
             String indexName = null;
             Schema oldSchema = null;
             boolean ifNotExists = false;
@@ -6815,8 +6817,14 @@ public class Parser {
                     hash = true;
                 } else if (!unique && readIf("SPATIAL")) {
                     spatial = true;
+                } else if (readIf("HASHBIT")) {
+                    hashbit = true;
                 }
                 read("INDEX");
+                if (hashbit && isToken("BUCKETS")){
+                    read("BUCKETS");
+                    numberOfHashbitBuckets = readNonNegativeInt();
+                }
                 if (!isToken(ON)) {
                     ifNotExists = readIfNotExists();
                     indexName = readIdentifierWithSchema(null);
@@ -6848,6 +6856,8 @@ public class Parser {
             command.setPrimaryKey(primaryKey);
             command.setTableName(tableName);
             command.setHash(hash);
+            command.setHashbit(hashbit);
+            command.setNumberOfHashbitBuckets(numberOfHashbitBuckets);
             command.setSpatial(spatial);
             command.setIndexName(indexName);
             command.setComment(comment);

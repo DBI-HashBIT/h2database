@@ -37,6 +37,7 @@ import org.h2.expression.condition.ConditionLocalAndGlobal;
 import org.h2.expression.function.CoalesceFunction;
 import org.h2.index.Cursor;
 import org.h2.index.Index;
+import org.h2.index.IndexHandler;
 import org.h2.index.ViewIndex;
 import org.h2.message.DbException;
 import org.h2.mode.DefaultNullOrdering;
@@ -155,6 +156,8 @@ public class Select extends Query {
     private boolean isGroupWindowStage2;
 
     private HashMap<String, Window> windows;
+
+    private ArrayList<Boolean> andOrBitmap;
 
     public Select(SessionLocal session, Select parentSelect) {
         super(session);
@@ -338,6 +341,13 @@ public class Select extends Query {
         return rowForResult(row, columnCount);
     }
 
+    public ArrayList<Boolean> getAndOrBitmap() {
+        if (this.andOrBitmap == null) {
+            this.andOrBitmap = generateAndOrBitmap();
+        }
+        return this.andOrBitmap;
+    }
+
     /**
      * Removes HAVING and QUALIFY columns from the row.
      *
@@ -419,7 +429,11 @@ public class Select extends Query {
     }
 
     boolean isConditionMetForUpdate() {
-        if (isConditionMet()) {
+        return isConditionMetForUpdate(false);
+    }
+
+    boolean isConditionMetForUpdate(Boolean bitmapValue) {
+        if (bitmapValue || isConditionMet()) {
             int count = filters.size();
             boolean notChanged = true;
             for (int i = 0; i < count; i++) {
@@ -440,7 +454,7 @@ public class Select extends Query {
                     }
                 }
             }
-            return notChanged || isConditionMet();
+            return notChanged || bitmapValue || isConditionMet();
         }
         return false;
     }
@@ -514,9 +528,21 @@ public class Select extends Query {
     private void gatherGroup(int columnCount, int stage) {
         long rowNumber = 0;
         setCurrentRowNumber(0);
+        int globalRowNumber = -1;
+        boolean bitmapValue;
+        boolean conditionMetvalue;
+        ArrayList<Boolean> generatedBitmap = getAndOrBitmap();
         while (topTableFilter.next()) {
+            globalRowNumber++;
+            bitmapValue = isConditionBitmapTrueForRow(generatedBitmap, globalRowNumber);
+            if (!bitmapValue) {
+//                System.out.println("Stop");
+                continue;
+            }
+//            System.out.println("Continue");
             setCurrentRowNumber(rowNumber + 1);
-            if (isForUpdate ? isConditionMetForUpdate() : isConditionMet()) {
+            conditionMetvalue = isConditionMet();
+            if (isForUpdate ? isConditionMetForUpdate(false) : conditionMetvalue) {
                 rowNumber++;
                 groupData.nextSource();
                 updateAgg(columnCount, stage);
@@ -524,7 +550,6 @@ public class Select extends Query {
         }
         groupData.done();
     }
-
 
     /**
      * Update any aggregate expressions with the query stage.
@@ -741,6 +766,21 @@ public class Select extends Query {
             result.limitsWereApplied();
         }
         return null;
+    }
+
+    private ArrayList<Boolean> generateAndOrBitmap() {
+        return IndexHandler.andOrOperationIndexes(condition, session);
+    }
+
+    private Boolean isConditionBitmapTrueForRow(ArrayList<Boolean> bitmap, int rowNumber) {
+        try {
+            if (bitmap !=null && bitmap.size() > 0 && !(bitmap.get(rowNumber))) {
+                return false;
+            }
+            return true;
+        } catch (Exception ex) {
+            return true;
+        }
     }
 
     private static void skipOffset(LazyResultSelect lazyResult, long offset, boolean quickOffset) {
@@ -1806,18 +1846,31 @@ public class Select extends Query {
     private final class LazyResultQueryFlat extends LazyResultSelect {
 
         private boolean forUpdate;
+        int globalRowIndex;
 
         LazyResultQueryFlat(Expression[] expressions, int columnCount, boolean forUpdate) {
             super(expressions, columnCount);
             this.forUpdate = forUpdate;
+            this.globalRowIndex = -1;
         }
 
         @Override
         protected Value[] fetchNextRow() {
+            Boolean bitmapValue = false;
+            Boolean conditionMetValue = false;
+            ArrayList<Boolean> generatedBitmap = getAndOrBitmap();
             while (topTableFilter.next()) {
+                this.globalRowIndex += 1;
                 setCurrentRowNumber(rowNumber + 1);
+                bitmapValue = isConditionBitmapTrueForRow(generatedBitmap, this.globalRowIndex);
+                if (!bitmapValue) {
+//                    System.out.println("Stop : 2");
+                    continue;
+                }
+//                System.out.println("Continue : 2");
+                conditionMetValue = isConditionMet();
                 // This method may lock rows
-                if (forUpdate ? isConditionMetForUpdate() : isConditionMet()) {
+                if (forUpdate ? isConditionMetForUpdate(false) : conditionMetValue) {
                     ++rowNumber;
                     Value[] row = new Value[columnCount];
                     for (int i = 0; i < columnCount; i++) {

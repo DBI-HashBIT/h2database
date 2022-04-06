@@ -51,7 +51,7 @@ public class ConditionAndOrN extends Condition {
         this.expressions = expressions;
     }
 
-    int getAndOrType() {
+    public int getAndOrType() {
         return andOrType;
     }
 

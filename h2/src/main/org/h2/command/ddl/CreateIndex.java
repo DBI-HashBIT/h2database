@@ -27,10 +27,11 @@ public class CreateIndex extends SchemaCommand {
     private String indexName;
     private IndexColumn[] indexColumns;
     private int uniqueColumnCount;
-    private boolean primaryKey, hash, spatial;
+    private boolean primaryKey, hash, spatial, hashbit;
     private boolean ifTableExists;
     private boolean ifNotExists;
     private String comment;
+    private int numberOfHashbitBuckets;
 
     public CreateIndex(SessionLocal session, Schema schema) {
         super(session, schema);
@@ -97,7 +98,7 @@ public class CreateIndex extends SchemaCommand {
         } else if (uniqueColumnCount > 0) {
             indexType = IndexType.createUnique(persistent, hash);
         } else {
-            indexType = IndexType.createNonUnique(persistent, hash, spatial);
+            indexType = IndexType.createNonUnique(persistent, hash, spatial, hashbit, numberOfHashbitBuckets);
         }
         IndexColumn.mapColumns(indexColumns, table);
         table.addIndex(session, indexName, id, indexColumns, uniqueColumnCount, indexType, create, comment);
@@ -122,6 +123,18 @@ public class CreateIndex extends SchemaCommand {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public boolean isHashbit() {
+        return hashbit;
+    }
+
+    public void setHashbit(boolean hashbit) {
+        this.hashbit = hashbit;
+    }
+
+    public void setNumberOfHashbitBuckets(int numberOfHashbitBuckets) {
+        this.numberOfHashbitBuckets = numberOfHashbitBuckets;
     }
 
     @Override

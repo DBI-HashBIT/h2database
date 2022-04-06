@@ -10,8 +10,9 @@ package org.h2.index;
  */
 public class IndexType {
 
-    private boolean primaryKey, persistent, unique, hash, scan, spatial;
+    private boolean primaryKey, persistent, unique, hash, scan, spatial, hashbit;
     private boolean belongsToConstraint;
+    private int numberOfHashbitBuckets;
 
     /**
      * Create a primary key index.
@@ -62,12 +63,27 @@ public class IndexType {
      * @param spatial if a spatial index should be used
      * @return the index type
      */
-    public static IndexType createNonUnique(boolean persistent, boolean hash,
-            boolean spatial) {
+
+    public static IndexType createNonUnique(boolean persistent, boolean hash, boolean spatial) {
+        return createNonUnique(persistent, hash, spatial, false, 0);
+    }
+
+    /**
+     * Create a non-unique index.
+     *
+     * @param persistent if the index is persistent
+     * @param hash if a hash index should be used
+     * @param spatial if a spatial index should be used
+     * @param hashbit if hashbit map index should be used
+     * @return the index type
+     */
+    public static IndexType createNonUnique(boolean persistent, boolean hash, boolean spatial, boolean hashbit, int numberOfHashbitBuckets) {
         IndexType type = new IndexType();
         type.persistent = persistent;
         type.hash = hash;
         type.spatial = spatial;
+        type.hashbit = hashbit;
+        type.numberOfHashbitBuckets = hashbit ? numberOfHashbitBuckets : 0;
         return type;
     }
 
@@ -146,6 +162,19 @@ public class IndexType {
      */
     public boolean isUnique() {
         return unique;
+    }
+
+    /**
+     * Is this a hashbit index?
+     *
+     * @return true if it is
+     */
+    public boolean isHashbit() {
+        return hashbit;
+    }
+
+    public int getNumberOfHashbitBuckets() {
+        return numberOfHashbitBuckets;
     }
 
     /**
