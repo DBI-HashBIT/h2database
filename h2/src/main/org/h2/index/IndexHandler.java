@@ -4,48 +4,24 @@ import org.h2.engine.SessionLocal;
 import org.h2.expression.Expression;
 import org.h2.expression.ExpressionColumn;
 import org.h2.expression.ValueExpression;
-import org.h2.expression.aggregate.Aggregate;
-import org.h2.expression.aggregate.AggregateType;
 import org.h2.expression.condition.Comparison;
 import org.h2.expression.condition.ConditionAndOr;
 import org.h2.expression.condition.ConditionAndOrN;
-import org.h2.index.hasbithelper.FileHelper;
-import org.h2.index.hasbithelper.HashBitObject;
 import org.h2.mvstore.db.HashBitIndex;
-import org.h2.mvstore.tx.TransactionMap;
-import org.h2.result.SearchRow;
 import org.h2.table.Column;
 import org.h2.table.Table;
-import org.h2.value.Value;
-import org.h2.value.ValueBigint;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class IndexHandler {
-    private static String hashBitIndexName  = "hashBitIndex";
-    private static int[] outerAndOrTempBitmapArray = new int[]{1, 1, 1, 1, 0, 0, 0, 1};
 
-//    private static ArrayList<Integer> getBitMapIndices(Column column, Table table, String value) {
-//        ArrayList<Integer> integerArray = new ArrayList<>(outerAndOrTempBitmapArray.length);
-//        for (int j : outerAndOrTempBitmapArray) {
-//            integerArray.add(j);
-//        }
-//        return integerArray;
-//    }
-
-    private static ArrayList<Integer> getBitMapIndices(HashBitIndex hashBitIndex, String value) {
+    private static ArrayList<Boolean> getBitMapIndices(HashBitIndex hashBitIndex, String value) {
         ArrayList<Boolean> bitmapArray = hashBitIndex.getBitMapArray(value);
-        if (bitmapArray == null) {
-            return null;
-        }
-        return (ArrayList<Integer>) (bitmapArray
-                .stream().map( (number) -> (number) ? 1 : 0 )
-                .collect(Collectors.toList()));
+        return bitmapArray;
     }
 
     //TODO: When there is another funcs with count, there can be errors so handle these (Expression == 1) things or Do count separtly and remove that expression
-    public static ArrayList<Integer> comparisonOperationIndexes(Expression expression, SessionLocal session) {
+    public static ArrayList<Boolean> comparisonOperationIndexes(Expression expression, SessionLocal session) {
         int i = 0;
         Column column;
         String columnName;
@@ -74,8 +50,8 @@ public class IndexHandler {
     }
 
     //TODO: When there is another funcs with AND/OR, there can be errors so handle these (Expression == 1) things or Do count separtly and remove that expression
-    public static ArrayList<Integer> andOrOperationIndexes(Expression expression, SessionLocal session) {
-        ArrayList<Integer> resultBitmap = new ArrayList<>(), left = null, right = null, results = null, values = null,
+    public static ArrayList<Boolean> andOrOperationIndexes(Expression expression, SessionLocal session) {
+        ArrayList<Boolean> resultBitmap = new ArrayList<>(), left = null, right = null, results = null, values = null,
                 tempresults = null;
         ConditionAndOr conditionAndOr;
         ConditionAndOrN conditionAndOrn;
@@ -108,23 +84,15 @@ public class IndexHandler {
         return results;
     }
 
-    public static ArrayList<Integer> andOrBitMap(ArrayList<Integer> left, ArrayList<Integer> right, int type) {
-        ArrayList<Integer> results = new ArrayList<>();
+    public static ArrayList<Boolean> andOrBitMap(ArrayList<Boolean> left, ArrayList<Boolean> right, int type) {
+        ArrayList<Boolean> results = new ArrayList<>();
         for(int i = 0; i < left.size(); i++) {
             if (type == ConditionAndOr.OR) {
-                results.add(Math.min(1, left.get(i) + right.get(i)));
+                results.add(left.get(i) || right.get(i));
             } else if (type == ConditionAndOr.AND) {
-                results.add(left.get(i) * right.get(i));
+                results.add(left.get(i) && right.get(i));
             }
         }
         return results;
-    }
-
-    public String getHashBitIndexName() {
-        return hashBitIndexName;
-    }
-
-    public void setHashBitIndexName(String hashBitIndexName) {
-        this.hashBitIndexName = hashBitIndexName;
     }
 }
