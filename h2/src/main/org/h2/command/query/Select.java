@@ -157,7 +157,7 @@ public class Select extends Query {
 
     private HashMap<String, Window> windows;
 
-    private ArrayList<Integer> andOrBitmap;
+    private ArrayList<Boolean> andOrBitmap;
 
     public Select(SessionLocal session, Select parentSelect) {
         super(session);
@@ -341,7 +341,7 @@ public class Select extends Query {
         return rowForResult(row, columnCount);
     }
 
-    public ArrayList<Integer> getAndOrBitmap() {
+    public ArrayList<Boolean> getAndOrBitmap() {
         if (this.andOrBitmap == null) {
             this.andOrBitmap = generateAndOrBitmap();
         }
@@ -531,7 +531,7 @@ public class Select extends Query {
         int globalRowNumber = -1;
         boolean bitmapValue;
         boolean conditionMetvalue;
-        ArrayList<Integer> generatedBitmap = getAndOrBitmap();
+        ArrayList<Boolean> generatedBitmap = getAndOrBitmap();
         while (topTableFilter.next()) {
             globalRowNumber++;
             bitmapValue = isConditionBitmapTrueForRow(generatedBitmap, globalRowNumber);
@@ -768,13 +768,13 @@ public class Select extends Query {
         return null;
     }
 
-    private ArrayList<Integer> generateAndOrBitmap() {
+    private ArrayList<Boolean> generateAndOrBitmap() {
         return IndexHandler.andOrOperationIndexes(condition, session);
     }
 
-    private Boolean isConditionBitmapTrueForRow(ArrayList<Integer> bitmap, int rowNumber) {
+    private Boolean isConditionBitmapTrueForRow(ArrayList<Boolean> bitmap, int rowNumber) {
         try {
-            if (bitmap !=null && bitmap.size() > 0 && bitmap.get(rowNumber).longValue() == 0) {
+            if (bitmap !=null && bitmap.size() > 0 && !(bitmap.get(rowNumber))) {
                 return false;
             }
             return true;
@@ -1858,7 +1858,7 @@ public class Select extends Query {
         protected Value[] fetchNextRow() {
             Boolean bitmapValue = false;
             Boolean conditionMetValue = false;
-            ArrayList<Integer> generatedBitmap = getAndOrBitmap();
+            ArrayList<Boolean> generatedBitmap = getAndOrBitmap();
             while (topTableFilter.next()) {
                 this.globalRowIndex += 1;
                 setCurrentRowNumber(rowNumber + 1);
